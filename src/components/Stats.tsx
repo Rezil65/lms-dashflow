@@ -1,6 +1,7 @@
 
 import { BookOpen, Folders, Award, Code } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface StatCardProps {
   title: string;
@@ -8,10 +9,12 @@ interface StatCardProps {
   icon: React.ReactNode;
   color: string;
   delay: number;
+  navigateTo?: string;
 }
 
-const StatCard = ({ title, value, icon, color, delay }: StatCardProps) => {
+const StatCard = ({ title, value, icon, color, delay, navigateTo }: StatCardProps) => {
   const [displayValue, setDisplayValue] = useState(0);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -35,10 +38,17 @@ const StatCard = ({ title, value, icon, color, delay }: StatCardProps) => {
     return () => clearTimeout(timeout);
   }, [value, delay]);
   
+  const handleClick = () => {
+    if (navigateTo) {
+      navigate(navigateTo);
+    }
+  };
+  
   return (
     <div 
-      className="stat-card bg-white rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in"
+      className={`stat-card bg-white rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in ${navigateTo ? 'cursor-pointer hover:bg-gray-50' : ''}`}
       style={{ animationDelay: `${delay}ms` }}
+      onClick={handleClick}
     >
       <div className="flex justify-between items-start">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -60,6 +70,7 @@ const Stats = () => {
         icon={<Folders className="w-5 h-5 text-white" />}
         color="bg-lms-blue"
         delay={100}
+        navigateTo="/create-course"
       />
       <StatCard
         title="Hours Learned"
