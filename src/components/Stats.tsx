@@ -1,5 +1,4 @@
-
-import { BookOpen, Certificate, Folders } from "lucide-react";
+import { BookOpen, Folders, Award } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface StatCardProps {
@@ -68,7 +67,7 @@ const Stats = () => {
       <StatCard
         title="Certificates"
         value={5}
-        icon={<Certificate className="w-4 h-4 text-white" />}
+        icon={<Award className="w-4 h-4 text-white" />}
         color="bg-lms-pink"
         delay={300}
       />
