@@ -1,4 +1,5 @@
-import { BookOpen, Folders, Award } from "lucide-react";
+
+import { BookOpen, Folders, Award, Code } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface StatCardProps {
@@ -35,14 +36,17 @@ const StatCard = ({ title, value, icon, color, delay }: StatCardProps) => {
   }, [value, delay]);
   
   return (
-    <div className="stat-card animate-fade-in" style={{ animationDelay: `${delay}ms` }}>
+    <div 
+      className="stat-card bg-white rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <div className="flex justify-between items-start">
         <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <div className={`w-8 h-8 rounded-md flex items-center justify-center ${color}`}>
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
           {icon}
         </div>
       </div>
-      <p className="text-2xl font-display font-semibold mt-1">{displayValue}</p>
+      <p className="text-3xl font-display font-semibold mt-2">{displayValue}</p>
     </div>
   );
 };
@@ -53,28 +57,28 @@ const Stats = () => {
       <StatCard
         title="Courses"
         value={24}
-        icon={<Folders className="w-4 h-4 text-white" />}
+        icon={<Folders className="w-5 h-5 text-white" />}
         color="bg-lms-blue"
         delay={100}
       />
       <StatCard
         title="Hours Learned"
         value={156}
-        icon={<BookOpen className="w-4 h-4 text-white" />}
+        icon={<BookOpen className="w-5 h-5 text-white" />}
         color="bg-lms-purple"
         delay={200}
       />
       <StatCard
         title="Certificates"
         value={5}
-        icon={<Award className="w-4 h-4 text-white" />}
+        icon={<Award className="w-5 h-5 text-white" />}
         color="bg-lms-pink"
         delay={300}
       />
       <StatCard
         title="Projects"
         value={12}
-        icon={<Folders className="w-4 h-4 text-white" />}
+        icon={<Code className="w-5 h-5 text-white" />}
         color="bg-lms-teal"
         delay={400}
       />
