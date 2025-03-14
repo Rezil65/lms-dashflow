@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				lms: {
+					blue: '#4361EE',
+					purple: '#7209B7',
+					pink: '#F72585',
+					indigo: '#3A0CA3',
+					teal: '#4CC9F0',
+					'light-blue': '#4CC9F0',
+					'light-gray': '#F8F9FA',
+					'dark-blue': '#03045E'
 				}
 			},
 			borderRadius: {
@@ -84,11 +95,70 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'fade-out': {
+					'0%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					},
+					'100%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					}
+				},
+				'scale-in': {
+					'0%': {
+						transform: 'scale(0.95)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
+				},
+				'slide-in': {
+					'0%': {
+						transform: 'translateX(-100%)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateX(0)',
+						opacity: '1'
+					}
+				},
+				'progress-fill': {
+					'0%': { width: '0%' },
+					'100%': { width: 'var(--progress-width)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.4s ease-out',
+				'fade-in-fast': 'fade-in 0.2s ease-out',
+				'scale-in': 'scale-in 0.3s ease-out',
+				'slide-in': 'slide-in 0.4s ease-out',
+				'progress-fill': 'progress-fill 1.5s ease-out forwards'
+			},
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				display: ['SF Pro Display', 'Inter', 'system-ui', 'sans-serif']
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'course-gradient-1': 'linear-gradient(135deg, #4CC9F0 0%, #4361EE 100%)',
+				'course-gradient-2': 'linear-gradient(135deg, #7209B7 0%, #F72585 100%)',
+				'course-gradient-3': 'linear-gradient(135deg, #3A0CA3 0%, #4361EE 100%)'
 			}
 		}
 	},
