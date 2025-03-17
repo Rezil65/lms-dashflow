@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +51,7 @@ const CourseCreation = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -94,15 +94,33 @@ const CourseCreation = () => {
     form.setValue("tags", newTags);
   };
 
-  const onSubmit = (data: FormValues) => {
-    console.log("Form submitted:", data);
-    toast({
-      title: "Course Created",
-      description: "Your course has been created successfully.",
-    });
-    // In a real app, this would save the course to a database
-    // and then redirect to the course detail page
-    setTimeout(() => navigate("/"), 1500);
+  const onSubmit = async (data: FormValues) => {
+    try {
+      setIsSubmitting(true);
+      console.log("Form submitted:", data);
+      
+      // In a real app, you would save the course to a database and get an ID back
+      // For now, we'll simulate this with a random ID
+      const courseId = Math.floor(Math.random() * 1000);
+      
+      toast({
+        title: "Course Created",
+        description: "Your course has been created successfully.",
+      });
+      
+      // Wait briefly to show the toast before navigating
+      setTimeout(() => {
+        navigate(`/course/${courseId}/content`);
+      }, 1000);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem creating your course. Please try again.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -333,8 +351,12 @@ const CourseCreation = () => {
                 </Card>
 
                 <div className="flex justify-end">
-                  <Button type="submit" size="lg">
-                    Create Course
+                  <Button 
+                    type="submit" 
+                    size="lg"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Creating..." : "Create Course"}
                   </Button>
                 </div>
               </form>
