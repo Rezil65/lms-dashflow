@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, ChevronDown, ChevronRight, BookOpen, Video, FileText, Image, File, Upload, Plus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, ChevronDown, ChevronRight, BookOpen, Video, FileText, Image, File, Upload, Plus, ExternalLink } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import FileUploader from "@/components/FileUploader";
 import { toast } from "@/components/ui/use-toast";
 import { getCourseById } from "@/utils/courseStorage";
+import ResourceUploader, { Resource } from "@/components/ResourceUploader";
+import EditableModule from "@/components/EditableModule";
 
 const courseLessons = [
   {
@@ -173,6 +175,8 @@ const CourseContent = () => {
   const [activeModule, setActiveModule] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [modules, setModules] = useState(courseLessons);
   
   const courseId = parseInt(id || "0");
   const courseData = getCourseById(courseId);
@@ -180,6 +184,18 @@ const CourseContent = () => {
   const courseTitle = courseData?.title || "Advanced React Development";
   const courseDescription = courseData?.description || 
     "Master modern React practices including hooks, context API, and advanced state management techniques.";
+  
+  useEffect(() => {
+    const storageKey = `course-${courseId}-resources`;
+    const savedResources = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    setResources(savedResources);
+    
+    const modulesKey = `course-${courseId}-modules`;
+    const savedModules = JSON.parse(localStorage.getItem(modulesKey) || "null");
+    if (savedModules) {
+      setModules(savedModules);
+    }
+  }, [courseId]);
   
   const toggleModule = (moduleId: number) => {
     if (activeModule === moduleId) {
@@ -205,6 +221,25 @@ const CourseContent = () => {
         description: "Your file has been uploaded successfully.",
       });
     }, 1500);
+  };
+  
+  const handleResourceAdded = (newResource: Resource) => {
+    setResources([...resources, newResource]);
+  };
+  
+  const handleModuleUpdate = (updatedModule: any) => {
+    const updatedModules = modules.map(module => 
+      module.id === updatedModule.id ? updatedModule : module
+    );
+    
+    setModules(updatedModules);
+    
+    const modulesKey = `course-${courseId}-modules`;
+    localStorage.setItem(modulesKey, JSON.stringify(updatedModules));
+  };
+  
+  const openResource = (resource: Resource) => {
+    window.open(resource.url, '_blank');
   };
   
   return (
@@ -273,57 +308,13 @@ const CourseContent = () => {
                   </TabsList>
 
                   <TabsContent value="content" className="space-y-4">
-                    {courseLessons.map((module) => (
-                      <Collapsible
+                    {modules.map((module) => (
+                      <EditableModule 
                         key={module.id}
-                        open={activeModule === module.id}
-                        onOpenChange={() => toggleModule(module.id)}
-                        className="border rounded-lg overflow-hidden"
-                      >
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-gray-50 hover:bg-gray-100 transition-colors">
-                          <div className="flex items-center gap-3">
-                            {activeModule === module.id ? (
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <div className="text-left">
-                              <div className="font-medium">{module.title}</div>
-                              <div className="text-sm text-muted-foreground">{module.lessons.length} lessons • {module.completion}% complete</div>
-                            </div>
-                          </div>
-                          <Progress value={module.completion} className="w-24 h-2" />
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <div className="divide-y">
-                            {module.lessons.map((lesson) => (
-                              <div key={lesson.id} className={`p-4 ${lesson.completed ? 'bg-gray-50' : 'bg-white'} hover:bg-gray-100 transition-colors cursor-pointer`}>
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex items-start gap-3">
-                                    <div className={`mt-1 rounded-full p-1 ${lesson.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                                      {mediaTypeIcon(lesson.type)}
-                                    </div>
-                                    <div>
-                                      <div className="font-medium">{lesson.title}</div>
-                                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                        {lesson.description}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-end gap-2">
-                                    <Badge variant={lesson.completed ? "outline" : "secondary"} className="text-xs">
-                                      {lesson.duration}
-                                    </Badge>
-                                    <div className="text-xs text-muted-foreground capitalize">
-                                      {lesson.type}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                        module={module}
+                        onModuleUpdate={handleModuleUpdate}
+                        resources={resources}
+                      />
                     ))}
                   </TabsContent>
 
@@ -331,25 +322,48 @@ const CourseContent = () => {
                     <div className="border rounded-lg p-6">
                       <div className="flex justify-between items-center mb-4">
                         <h3 className="text-lg font-medium">Course Resources</h3>
-                        <Button variant="outline" size="sm" className="flex items-center gap-1">
-                          <Plus className="h-3 w-3" />
-                          <span>Add Resource</span>
-                        </Button>
+                        <ResourceUploader 
+                          courseId={courseId} 
+                          onResourceAdded={handleResourceAdded} 
+                        />
                       </div>
-                      <ul className="space-y-3">
-                        <li className="flex items-center gap-2">
-                          <File className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-blue-600 hover:underline cursor-pointer">Course Syllabus.pdf</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <File className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-blue-600 hover:underline cursor-pointer">Starter Code.zip</span>
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <File className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-blue-600 hover:underline cursor-pointer">Supplementary Readings.pdf</span>
-                        </li>
-                      </ul>
+                      
+                      {resources.length > 0 ? (
+                        <ul className="space-y-3">
+                          {resources.map((resource) => (
+                            <li 
+                              key={resource.id} 
+                              className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md border"
+                            >
+                              <div className="flex items-center gap-2">
+                                <File className="h-4 w-4 text-muted-foreground" />
+                                <span 
+                                  className="text-blue-600 hover:underline cursor-pointer"
+                                  onClick={() => openResource(resource)}
+                                >
+                                  {resource.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="text-xs text-muted-foreground mr-3">
+                                  {new Date(resource.dateAdded).toLocaleDateString()}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openResource(resource)}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-4">
+                          No resources yet. Add resources using the button above.
+                        </p>
+                      )}
                     </div>
                   </TabsContent>
 
