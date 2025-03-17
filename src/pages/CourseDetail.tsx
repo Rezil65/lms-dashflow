@@ -1,9 +1,12 @@
 
 import { ArrowLeft, BookOpen, Calendar, Clock, Video } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
 
 const CourseDetail = () => {
+  const { id } = useParams();
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -44,6 +47,14 @@ const CourseDetail = () => {
                   <span className="text-sm">Updated June 2023</span>
                 </div>
               </div>
+              
+              <div className="mt-6">
+                <Link to={`/course/${id}/content`}>
+                  <Button className="bg-white text-blue-600 hover:bg-blue-50">
+                    Start Learning
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
           
@@ -79,6 +90,14 @@ const CourseDetail = () => {
                     <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">Locked</span>
                   </div>
                 </div>
+              </div>
+              
+              <div className="mt-8 flex">
+                <Link to={`/course/${id}/content`}>
+                  <Button size="lg">
+                    Go to Course Content
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
