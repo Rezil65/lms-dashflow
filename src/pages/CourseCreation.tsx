@@ -28,6 +28,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { saveCourse } from "@/utils/courseStorage";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -99,9 +100,21 @@ const CourseCreation = () => {
       setIsSubmitting(true);
       console.log("Form submitted:", data);
       
-      // In a real app, you would save the course to a database and get an ID back
-      // For now, we'll simulate this with a random ID
-      const courseId = Math.floor(Math.random() * 1000);
+      // Save the course data to localStorage
+      const newCourse = saveCourse({
+        title: data.title,
+        description: data.description,
+        category: data.category,
+        level: data.level,
+        price: data.price,
+        duration: data.duration,
+        isFeatured: data.isFeatured,
+        tags: data.tags,
+        thumbnail: thumbnailPreview || undefined,
+      });
+      
+      // Dispatch a custom event to notify other components
+      window.dispatchEvent(new Event('courseAdded'));
       
       toast({
         title: "Course Created",
@@ -110,7 +123,7 @@ const CourseCreation = () => {
       
       // Wait briefly to show the toast before navigating
       setTimeout(() => {
-        navigate(`/course/${courseId}/content`);
+        navigate(`/course/${newCourse.id}/content`);
       }, 1000);
     } catch (error) {
       console.error("Error creating course:", error);

@@ -2,6 +2,7 @@
 import { BookOpen, Folders, Award, Code } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getTotalCourseCount } from "@/utils/courseStorage";
 
 interface StatCardProps {
   title: string;
@@ -62,11 +63,33 @@ const StatCard = ({ title, value, icon, color, delay, navigateTo }: StatCardProp
 };
 
 const Stats = () => {
+  const [courseCount, setCourseCount] = useState(0);
+  
+  useEffect(() => {
+    // Get the course count from localStorage
+    setCourseCount(getTotalCourseCount());
+    
+    // Listen for storage events to update the count if it changes
+    const handleStorageChange = () => {
+      setCourseCount(getTotalCourseCount());
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event for when a course is added
+    window.addEventListener('courseAdded', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('courseAdded', handleStorageChange);
+    };
+  }, []);
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         title="Courses"
-        value={24}
+        value={courseCount}
         icon={<Folders className="w-5 h-5 text-white" />}
         color="bg-lms-blue"
         delay={100}

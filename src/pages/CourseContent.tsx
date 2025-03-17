@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { ArrowLeft, ChevronDown, ChevronRight, BookOpen, Video, FileText, Image, File } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, BookOpen, Video, FileText, Image, File, Upload, Plus } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -8,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import FileUploader from "@/components/FileUploader";
+import { toast } from "@/components/ui/use-toast";
+import { getCourseById } from "@/utils/courseStorage";
 
-// Mock data for course content
 const courseLessons = [
   {
     id: 1,
@@ -169,18 +171,40 @@ const mediaTypeIcon = (type: string) => {
 const CourseContent = () => {
   const { id } = useParams();
   const [activeModule, setActiveModule] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   
-  // Mock course data (would come from API in a real app)
-  const courseTitle = "Advanced React Development";
-  const courseDescription = "Master modern React practices including hooks, context API, and advanced state management techniques.";
+  const courseId = parseInt(id || "0");
+  const courseData = getCourseById(courseId);
   
-  // Toggle module expansion
+  const courseTitle = courseData?.title || "Advanced React Development";
+  const courseDescription = courseData?.description || 
+    "Master modern React practices including hooks, context API, and advanced state management techniques.";
+  
   const toggleModule = (moduleId: number) => {
     if (activeModule === moduleId) {
       setActiveModule(null);
     } else {
       setActiveModule(moduleId);
     }
+  };
+  
+  const handleFileUploaded = (file: File) => {
+    setCurrentFile(file);
+  };
+  
+  const handleUploadComplete = () => {
+    setUploading(true);
+    
+    setTimeout(() => {
+      setUploading(false);
+      setCurrentFile(null);
+      
+      toast({
+        title: "File Uploaded",
+        description: "Your file has been uploaded successfully.",
+      });
+    }, 1500);
   };
   
   return (
@@ -190,7 +214,7 @@ const CourseContent = () => {
       <div className="border-b bg-white">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
-            <Link to="/course/${id}" className="text-muted-foreground hover:text-foreground">
+            <Link to={`/course/${id}`} className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="text-lg font-semibold">Course Content</h1>
@@ -203,8 +227,43 @@ const CourseContent = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
               <div className="p-6">
-                <h1 className="text-2xl font-display font-semibold mb-2">{courseTitle}</h1>
-                <p className="text-muted-foreground mb-4">{courseDescription}</p>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h1 className="text-2xl font-display font-semibold mb-2">{courseTitle}</h1>
+                    <p className="text-muted-foreground mb-4">{courseDescription}</p>
+                  </div>
+                  
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        <span>Upload Content</span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Upload Course Material</DialogTitle>
+                        <DialogDescription>
+                          Upload videos, documents, or other resources for your course.
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="py-4">
+                        <FileUploader onFileUploaded={handleFileUploaded} />
+                      </div>
+                      
+                      <DialogFooter>
+                        <Button
+                          type="submit"
+                          onClick={handleUploadComplete}
+                          disabled={!currentFile || uploading}
+                        >
+                          {uploading ? "Uploading..." : "Upload to Course"}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 
                 <Tabs defaultValue="content" className="w-full">
                   <TabsList className="mb-4">
@@ -270,7 +329,13 @@ const CourseContent = () => {
 
                   <TabsContent value="resources">
                     <div className="border rounded-lg p-6">
-                      <h3 className="text-lg font-medium mb-4">Course Resources</h3>
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-medium">Course Resources</h3>
+                        <Button variant="outline" size="sm" className="flex items-center gap-1">
+                          <Plus className="h-3 w-3" />
+                          <span>Add Resource</span>
+                        </Button>
+                      </div>
                       <ul className="space-y-3">
                         <li className="flex items-center gap-2">
                           <File className="h-4 w-4 text-muted-foreground" />
