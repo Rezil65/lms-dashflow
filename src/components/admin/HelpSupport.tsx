@@ -13,7 +13,8 @@ import {
   Search,
   ArrowRight,
   CheckCircle,
-  DownloadCloud
+  DownloadCloud,
+  Mail
 } from "lucide-react";
 
 const HelpSupport = () => {
@@ -200,7 +201,7 @@ const HelpSupport = () => {
                     How can I backup my LMS data?
                   </h3>
                   <p className="text-muted-foreground pl-7">
-                    Go to Settings > Backup, where you can configure automatic backups or trigger a manual backup.
+                    Go to Settings {'>'} Backup, where you can configure automatic backups or trigger a manual backup.
                     Backups include all courses, user data, and system configurations.
                   </p>
                 </div>
@@ -211,7 +212,7 @@ const HelpSupport = () => {
                     How do I set up payment integrations?
                   </h3>
                   <p className="text-muted-foreground pl-7">
-                    Navigate to Payment Management > Settings, where you can configure payment gateways like Stripe
+                    Navigate to Payment Management {'>'} Settings, where you can configure payment gateways like Stripe
                     or PayPal. You'll need to enter your API keys from these services to enable payments.
                   </p>
                 </div>
