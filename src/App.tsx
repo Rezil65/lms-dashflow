@@ -14,6 +14,7 @@ import InstructorDashboard from "./pages/InstructorDashboard";
 import LearnerDashboard from "./pages/LearnerDashboard";
 import Login from "./pages/Login";
 import MfaSetup from "./pages/MfaSetup";
+import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -35,7 +36,17 @@ const App = () => (
               path="/" 
               element={
                 <ProtectedRoute>
-                  <Navigate to="/learner" replace />
+                  <Navigate to="/profile" replace />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Profile page */}
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               } 
             />

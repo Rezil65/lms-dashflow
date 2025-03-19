@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 // Validation schema for login form
 const loginSchema = z.object({
@@ -46,6 +47,7 @@ const Login = () => {
   const [showMfa, setShowMfa] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const { login } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -98,11 +100,11 @@ const Login = () => {
 
   const completeLogin = (user: any) => {
     // Store user info in localStorage for session management
-    localStorage.setItem("user", JSON.stringify({
+    login({
       id: user.id,
       email: user.email,
       role: user.role,
-    }));
+    });
 
     // Show success toast
     toast({
@@ -110,113 +112,143 @@ const Login = () => {
       description: `Welcome back, ${user.email}!`,
     });
 
-    // Redirect based on role
-    switch (user.role) {
-      case "admin":
-        navigate("/admin");
-        break;
-      case "instructor":
-        navigate("/instructor");
-        break;
-      case "learner":
-        navigate("/learner");
-        break;
-      default:
-        navigate("/");
-    }
+    // Redirect to the profile page
+    navigate("/profile");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <User className="h-6 w-6 text-primary" />
-            </div>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Introduction side */}
+      <div className="hidden md:flex md:w-1/2 bg-white flex-col justify-center items-center p-10">
+        <div className="max-w-md">
+          <img 
+            src="/lovable-uploads/b4b49a49-4415-4608-919d-8c583dd41903.png" 
+            alt="Kyureeus Logo" 
+            className="w-full max-w-md mb-8" 
+          />
+          <h1 className="text-3xl font-bold mb-4">Welcome to Kyureeus LMS</h1>
+          <p className="text-gray-600 mb-6">
+            Transform your learning experience with our comprehensive learning management system. 
+            Designed for students, instructors, and administrators to collaborate seamlessly.
+          </p>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-semibold mb-2">Key Features</h3>
+            <ul className="space-y-2">
+              <li className="flex items-start">
+                <div className="mr-2 mt-1 bg-primary/10 rounded-full p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span>Personalized learning paths</span>
+              </li>
+              <li className="flex items-start">
+                <div className="mr-2 mt-1 bg-primary/10 rounded-full p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span>Interactive course content</span>
+              </li>
+              <li className="flex items-start">
+                <div className="mr-2 mt-1 bg-primary/10 rounded-full p-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <span>Progress tracking and analytics</span>
+              </li>
+            </ul>
           </div>
-          <CardTitle className="text-2xl text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!showMfa ? (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="example@email.com" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full">Sign In</Button>
-              </form>
-            </Form>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex justify-center mb-4">
-                <ShieldCheck className="h-12 w-12 text-primary" />
+        </div>
+      </div>
+
+      {/* Login side */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="space-y-1">
+            <div className="flex justify-center mb-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <User className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-center text-lg font-medium">Two-Factor Authentication</h3>
-              <p className="text-center text-sm text-muted-foreground">
-                Enter the 6-digit code sent to your email
-              </p>
-              <div className="flex justify-center my-4">
-                <Input
-                  type="text"
-                  className="text-center text-lg w-40"
-                  placeholder="123456"
-                  maxLength={6}
-                  value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value)}
-                />
-              </div>
-              <Button onClick={handleMfaSubmit} className="w-full">Verify</Button>
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Didn't receive a code? <a href="#" className="text-primary hover:underline">Resend</a>
-              </p>
             </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-center text-sm">
-            <a href="#" className="text-primary hover:underline">Forgot password?</a>
-          </div>
-          <div className="text-center text-sm text-muted-foreground">
-            <p>For demo purposes, you can use:</p>
-            <p><strong>Admin:</strong> admin@example.com / admin123</p>
-            <p><strong>Instructor:</strong> instructor@example.com / instructor123</p>
-            <p><strong>Learner:</strong> learner@example.com / learner123</p>
-          </div>
-        </CardFooter>
-      </Card>
+            <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+            <CardDescription className="text-center">
+              Enter your credentials to access your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showMfa ? (
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="example@email.com" className="pl-10" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <KeyRound className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input type="password" placeholder="••••••••" className="pl-10" {...field} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full">Sign In</Button>
+                </form>
+              </Form>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-center mb-4">
+                  <ShieldCheck className="h-12 w-12 text-primary" />
+                </div>
+                <h3 className="text-center text-lg font-medium">Two-Factor Authentication</h3>
+                <p className="text-center text-sm text-muted-foreground">
+                  Enter the 6-digit code sent to your email
+                </p>
+                <div className="flex justify-center my-4">
+                  <Input
+                    type="text"
+                    className="text-center text-lg w-40"
+                    placeholder="123456"
+                    maxLength={6}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleMfaSubmit} className="w-full">Verify</Button>
+                <p className="text-center text-sm text-muted-foreground mt-4">
+                  Didn't receive a code? <a href="#" className="text-primary hover:underline">Resend</a>
+                </p>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <div className="text-center text-sm">
+              <a href="#" className="text-primary hover:underline">Forgot password?</a>
+            </div>
+            <div className="text-center text-sm text-muted-foreground">
+              <p>For demo purposes, you can use:</p>
+              <p><strong>Admin:</strong> admin@example.com / admin123</p>
+              <p><strong>Instructor:</strong> instructor@example.com / instructor123</p>
+              <p><strong>Learner:</strong> learner@example.com / learner123</p>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 };
