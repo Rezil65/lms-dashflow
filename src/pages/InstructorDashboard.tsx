@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { 
   BookOpen,
@@ -32,7 +33,8 @@ import {
   FileText,
   ListChecks,
   Calendar,
-  UserCog
+  UserCog,
+  Shield
 } from "lucide-react";
 
 // Sample instructor data
