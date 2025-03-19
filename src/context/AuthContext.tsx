@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (userData: User) => void;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
+  hasRole: (role: UserRole | UserRole[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,9 +88,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userPermissions = rolePermissions[user.role];
     return userPermissions.includes(permission);
   };
+  
+  const hasRole = (role: UserRole | UserRole[]): boolean => {
+    if (!user) return false;
+    
+    if (Array.isArray(role)) {
+      return role.includes(user.role);
+    }
+    
+    return user.role === role;
+  };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, hasPermission }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout, hasPermission, hasRole }}>
       {children}
     </AuthContext.Provider>
   );

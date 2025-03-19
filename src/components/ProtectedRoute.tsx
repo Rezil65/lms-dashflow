@@ -1,9 +1,11 @@
+
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { UserRole } from "@/context/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
   redirectPath?: string;
 }
 
@@ -12,7 +14,7 @@ const ProtectedRoute = ({
   allowedRoles = [],
   redirectPath = "/login"
 }: ProtectedRouteProps) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, hasRole } = useAuth();
   const location = useLocation();
 
   // If not authenticated, redirect to login
@@ -20,8 +22,8 @@ const ProtectedRoute = ({
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // If allowedRoles is provided and user role is not in allowedRoles, redirect to home
-  if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
+  // If allowedRoles is provided and user role is not in allowedRoles, redirect to appropriate dashboard
+  if (allowedRoles.length > 0 && user && !hasRole(allowedRoles)) {
     // Redirect based on role
     let redirectTo = "/";
     if (user.role === "admin") redirectTo = "/admin";

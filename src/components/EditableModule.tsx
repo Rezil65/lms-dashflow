@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pencil, Save, X, Plus, Trash } from "lucide-react";
+import { Pencil, Save, X, Plus, Trash, ChevronDown, ChevronRight, Video, FileText, File, BookOpen, Image } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Lesson {
   id: string;
@@ -28,10 +30,31 @@ interface EditableModuleProps {
   resources: any[];
 }
 
+const mediaTypeIcon = (type: string) => {
+  switch (type) {
+    case 'video':
+      return <Video className="h-4 w-4" />;
+    case 'text':
+      return <FileText className="h-4 w-4" />;
+    case 'pdf':
+      return <File className="h-4 w-4" />;
+    case 'image':
+      return <Image className="h-4 w-4" />;
+    case 'exercise':
+      return <BookOpen className="h-4 w-4" />;
+    default:
+      return <File className="h-4 w-4" />;
+  }
+};
+
 const EditableModule = ({ module, onModuleUpdate, resources }: EditableModuleProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedModule, setEditedModule] = useState<Module>({ ...module });
   const [showResourceSelector, setShowResourceSelector] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const { hasRole } = useAuth();
+  
+  const canEdit = hasRole(["admin", "instructor"]);
   
   const handleTitleChange = (value: string) => {
     setEditedModule({ ...editedModule, title: value });
@@ -108,6 +131,58 @@ const EditableModule = ({ module, onModuleUpdate, resources }: EditableModulePro
     setIsEditing(false);
   };
   
+  // Learner View (Read-only view)
+  if (!canEdit) {
+    return (
+      <div className="border rounded-lg overflow-hidden mb-4">
+        <Collapsible
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          className="w-full"
+        >
+          <div className="p-4 bg-gray-50 flex items-center justify-between">
+            <div>
+              <CollapsibleTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors focus:outline-none">
+                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                <div>
+                  <h3 className="font-medium">{module.title}</h3>
+                  <p className="text-sm text-muted-foreground">{module.description}</p>
+                </div>
+              </CollapsibleTrigger>
+            </div>
+          </div>
+          
+          <CollapsibleContent className="divide-y border-t">
+            {module.lessons.map((lesson) => (
+              <div key={lesson.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-full p-1 bg-blue-100 text-blue-600 mt-0.5">
+                      {mediaTypeIcon(lesson.type)}
+                    </div>
+                    <div>
+                      <h4 className="font-medium">{lesson.title}</h4>
+                      <p className="text-sm text-muted-foreground">{lesson.description}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                          {lesson.duration}
+                        </span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded capitalize">
+                          {lesson.type}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+  
+  // Instructor/Admin View (Editable view)
   return (
     <div className="border rounded-lg overflow-hidden mb-4">
       <div className="p-4 bg-gray-50">
@@ -241,6 +316,45 @@ const EditableModule = ({ module, onModuleUpdate, resources }: EditableModulePro
             </div>
           ))}
         </div>
+      )}
+      
+      {!isEditing && (
+        <Collapsible
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          className="w-full"
+        >
+          <CollapsibleTrigger className="w-full flex items-center justify-between p-3 hover:bg-gray-100 border-t focus:outline-none">
+            <span className="text-sm font-medium">View Lessons ({module.lessons.length})</span>
+            {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="divide-y border-t">
+            {module.lessons.map((lesson) => (
+              <div key={lesson.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-full p-1 bg-blue-100 text-blue-600 mt-0.5">
+                      {mediaTypeIcon(lesson.type)}
+                    </div>
+                    <div>
+                      <h4 className="font-medium">{lesson.title}</h4>
+                      <p className="text-sm text-muted-foreground">{lesson.description}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                          {lesson.duration}
+                        </span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded capitalize">
+                          {lesson.type}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );

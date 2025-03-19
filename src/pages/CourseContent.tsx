@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/use-toast";
 import { getCourseById } from "@/utils/courseStorage";
 import ResourceUploader, { Resource } from "@/components/ResourceUploader";
 import EditableModule from "@/components/EditableModule";
+import { useAuth } from "@/context/AuthContext";
 
 const courseLessons = [
   {
@@ -177,6 +178,9 @@ const CourseContent = () => {
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [modules, setModules] = useState(courseLessons);
+  const { hasRole } = useAuth();
+  
+  const canEdit = hasRole(["admin", "instructor"]);
   
   const courseId = parseInt(id || "0");
   const courseData = getCourseById(courseId);
@@ -268,42 +272,44 @@ const CourseContent = () => {
                     <p className="text-muted-foreground mb-4">{courseDescription}</p>
                   </div>
                   
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="flex items-center gap-2">
-                        <Upload className="h-4 w-4" />
-                        <span>Upload Content</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Upload Course Material</DialogTitle>
-                        <DialogDescription>
-                          Upload videos, documents, or other resources for your course.
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="py-4">
-                        <FileUploader onFileUploaded={handleFileUploaded} />
-                      </div>
-                      
-                      <DialogFooter>
-                        <Button
-                          type="submit"
-                          onClick={handleUploadComplete}
-                          disabled={!currentFile || uploading}
-                        >
-                          {uploading ? "Uploading..." : "Upload to Course"}
+                  {canEdit && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          <span>Upload Content</span>
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Upload Course Material</DialogTitle>
+                          <DialogDescription>
+                            Upload videos, documents, or other resources for your course.
+                          </DialogDescription>
+                        </DialogHeader>
+                        
+                        <div className="py-4">
+                          <FileUploader onFileUploaded={handleFileUploaded} />
+                        </div>
+                        
+                        <DialogFooter>
+                          <Button
+                            type="submit"
+                            onClick={handleUploadComplete}
+                            disabled={!currentFile || uploading}
+                          >
+                            {uploading ? "Uploading..." : "Upload to Course"}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </div>
                 
                 <Tabs defaultValue="content" className="w-full">
                   <TabsList className="mb-4">
                     <TabsTrigger value="content">Course Content</TabsTrigger>
-                    <TabsTrigger value="resources">Resources</TabsTrigger>
+                    {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
                     <TabsTrigger value="notes">My Notes</TabsTrigger>
                   </TabsList>
 
@@ -318,54 +324,56 @@ const CourseContent = () => {
                     ))}
                   </TabsContent>
 
-                  <TabsContent value="resources">
-                    <div className="border rounded-lg p-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-medium">Course Resources</h3>
-                        <ResourceUploader 
-                          courseId={courseId} 
-                          onResourceAdded={handleResourceAdded} 
-                        />
+                  {canEdit && (
+                    <TabsContent value="resources">
+                      <div className="border rounded-lg p-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-medium">Course Resources</h3>
+                          <ResourceUploader 
+                            courseId={courseId} 
+                            onResourceAdded={handleResourceAdded} 
+                          />
+                        </div>
+                        
+                        {resources.length > 0 ? (
+                          <ul className="space-y-3">
+                            {resources.map((resource) => (
+                              <li 
+                                key={resource.id} 
+                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md border"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <File className="h-4 w-4 text-muted-foreground" />
+                                  <span 
+                                    className="text-blue-600 hover:underline cursor-pointer"
+                                    onClick={() => openResource(resource)}
+                                  >
+                                    {resource.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center">
+                                  <span className="text-xs text-muted-foreground mr-3">
+                                    {new Date(resource.dateAdded).toLocaleDateString()}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => openResource(resource)}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-muted-foreground text-center py-4">
+                            No resources yet. Add resources using the button above.
+                          </p>
+                        )}
                       </div>
-                      
-                      {resources.length > 0 ? (
-                        <ul className="space-y-3">
-                          {resources.map((resource) => (
-                            <li 
-                              key={resource.id} 
-                              className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md border"
-                            >
-                              <div className="flex items-center gap-2">
-                                <File className="h-4 w-4 text-muted-foreground" />
-                                <span 
-                                  className="text-blue-600 hover:underline cursor-pointer"
-                                  onClick={() => openResource(resource)}
-                                >
-                                  {resource.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center">
-                                <span className="text-xs text-muted-foreground mr-3">
-                                  {new Date(resource.dateAdded).toLocaleDateString()}
-                                </span>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openResource(resource)}
-                                >
-                                  <ExternalLink className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-muted-foreground text-center py-4">
-                          No resources yet. Add resources using the button above.
-                        </p>
-                      )}
-                    </div>
-                  </TabsContent>
+                    </TabsContent>
+                  )}
 
                   <TabsContent value="notes">
                     <div className="border rounded-lg p-6 text-center">
