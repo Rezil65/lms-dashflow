@@ -38,20 +38,20 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 // Define validation schemas based on role
-const commonSchema = {
+const commonSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email format").readonly(),
-};
+});
 
 const adminSchema = z.object({
-  ...commonSchema,
+  ...commonSchema.shape,
   organizationName: z.string().min(2, "Organization name must be at least 2 characters"),
   contactPhone: z.string().min(10, "Phone number must be at least 10 characters"),
 });
 
 const instructorSchema = z.object({
-  ...commonSchema,
+  ...commonSchema.shape,
   bio: z.string().min(10, "Bio must be at least 10 characters"),
   qualifications: z.string().min(5, "Qualifications must be at least 5 characters"),
   expertise: z.string().min(5, "Areas of expertise must be at least 5 characters"),
@@ -60,7 +60,7 @@ const instructorSchema = z.object({
 });
 
 const learnerSchema = z.object({
-  ...commonSchema,
+  ...commonSchema.shape,
   education: z.string().min(5, "Education must be at least 5 characters"),
   goals: z.string().min(5, "Career goals must be at least 5 characters"),
 });
@@ -116,7 +116,7 @@ const ProfilePage = () => {
       case "admin": return adminSchema;
       case "instructor": return instructorSchema;
       case "learner": return learnerSchema;
-      default: return z.object(commonSchema);
+      default: return commonSchema;
     }
   };
   
@@ -357,7 +357,7 @@ const ProfilePage = () => {
                             disabled={!isEditMode}
                           />
                           {form.formState.errors.firstName && (
-                            <p className="text-sm text-destructive">{form.formState.errors.firstName.message}</p>
+                            <p className="text-sm text-destructive">{String(form.formState.errors.firstName.message)}</p>
                           )}
                         </div>
                         <div className="space-y-2">
@@ -369,7 +369,7 @@ const ProfilePage = () => {
                             disabled={!isEditMode}
                           />
                           {form.formState.errors.lastName && (
-                            <p className="text-sm text-destructive">{form.formState.errors.lastName.message}</p>
+                            <p className="text-sm text-destructive">{String(form.formState.errors.lastName.message)}</p>
                           )}
                         </div>
                       </div>
@@ -404,7 +404,7 @@ const ProfilePage = () => {
                               />
                             </div>
                             {form.formState.errors.organizationName && (
-                              <p className="text-sm text-destructive">{form.formState.errors.organizationName.message}</p>
+                              <p className="text-sm text-destructive">{String(form.formState.errors.organizationName.message)}</p>
                             )}
                           </div>
                           <div className="space-y-2">
@@ -420,7 +420,7 @@ const ProfilePage = () => {
                               />
                             </div>
                             {form.formState.errors.contactPhone && (
-                              <p className="text-sm text-destructive">{form.formState.errors.contactPhone.message}</p>
+                              <p className="text-sm text-destructive">{String(form.formState.errors.contactPhone.message)}</p>
                             )}
                           </div>
                         </>
@@ -438,7 +438,7 @@ const ProfilePage = () => {
                               disabled={!isEditMode}
                             />
                             {form.formState.errors.bio && (
-                              <p className="text-sm text-destructive">{form.formState.errors.bio.message}</p>
+                              <p className="text-sm text-destructive">{String(form.formState.errors.bio.message)}</p>
                             )}
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -451,7 +451,7 @@ const ProfilePage = () => {
                                 disabled={!isEditMode}
                               />
                               {form.formState.errors.qualifications && (
-                                <p className="text-sm text-destructive">{form.formState.errors.qualifications.message}</p>
+                                <p className="text-sm text-destructive">{String(form.formState.errors.qualifications.message)}</p>
                               )}
                             </div>
                             <div className="space-y-2">
@@ -463,7 +463,7 @@ const ProfilePage = () => {
                                 disabled={!isEditMode}
                               />
                               {form.formState.errors.expertise && (
-                                <p className="text-sm text-destructive">{form.formState.errors.expertise.message}</p>
+                                <p className="text-sm text-destructive">{String(form.formState.errors.expertise.message)}</p>
                               )}
                             </div>
                           </div>
@@ -481,7 +481,7 @@ const ProfilePage = () => {
                                 />
                               </div>
                               {form.formState.errors.portfolio && (
-                                <p className="text-sm text-destructive">{form.formState.errors.portfolio.message}</p>
+                                <p className="text-sm text-destructive">{String(form.formState.errors.portfolio.message)}</p>
                               )}
                             </div>
                             <div className="space-y-2">
@@ -497,7 +497,7 @@ const ProfilePage = () => {
                                 />
                               </div>
                               {form.formState.errors.linkedin && (
-                                <p className="text-sm text-destructive">{form.formState.errors.linkedin.message}</p>
+                                <p className="text-sm text-destructive">{String(form.formState.errors.linkedin.message)}</p>
                               )}
                             </div>
                           </div>
@@ -519,7 +519,7 @@ const ProfilePage = () => {
                               />
                             </div>
                             {form.formState.errors.education && (
-                              <p className="text-sm text-destructive">{form.formState.errors.education.message}</p>
+                              <p className="text-sm text-destructive">{String(form.formState.errors.education.message)}</p>
                             )}
                           </div>
                           <div className="space-y-2">
@@ -532,7 +532,7 @@ const ProfilePage = () => {
                               disabled={!isEditMode}
                             />
                             {form.formState.errors.goals && (
-                              <p className="text-sm text-destructive">{form.formState.errors.goals.message}</p>
+                              <p className="text-sm text-destructive">{String(form.formState.errors.goals.message)}</p>
                             )}
                           </div>
                         </>
