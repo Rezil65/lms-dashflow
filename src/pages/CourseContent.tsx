@@ -1,50 +1,43 @@
+
 import { useState, useEffect } from "react";
-import { ArrowLeft, ChevronDown, ChevronRight, BookOpen, Video, FileText, Image, File, Upload, Plus, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Upload } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import FileUploader from "@/components/FileUploader";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
 import { getCourseById } from "@/utils/courseStorage";
 import ResourceUploader, { Resource } from "@/components/ResourceUploader";
-import EditableModule from "@/components/EditableModule";
 import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/ui/input";
+import RichTextEditor from "@/components/RichTextEditor";
+import ModuleEditor, { Module } from "@/components/ModuleEditor";
+import ModuleDisplay from "@/components/ModuleDisplay";
+import ContentEmbedder, { EmbedData } from "@/components/ContentEmbedder";
+import { Card, CardContent } from "@/components/ui/card";
 
-const courseLessons = [
+const defaultModules: Module[] = [
   {
     id: 1,
     title: "Module 1: Introduction to the Course",
     description: "An overview of what you'll learn and how to use this platform.",
-    completion: 100,
     lessons: [
       {
         id: "1-1",
         title: "Welcome to the Course",
-        duration: "5 min",
         type: "video",
-        completed: true,
-        description: "Get to know your instructor and understand what you'll learn in this course."
+        content: "Get to know your instructor and understand what you'll learn in this course.",
+        duration: "5 min",
       },
       {
         id: "1-2",
         title: "How to Use the Learning Platform",
-        duration: "8 min",
-        type: "video",
-        completed: true,
-        description: "Learn how to navigate through the course materials efficiently."
-      },
-      {
-        id: "1-3",
-        title: "Course Outline & Resources",
-        duration: "3 min",
         type: "text",
-        completed: true,
-        description: "Overview of all modules and supplementary resources available to you."
+        content: "Learn how to navigate through the course materials efficiently.",
+        duration: "8 min",
       }
     ]
   },
@@ -52,198 +45,118 @@ const courseLessons = [
     id: 2,
     title: "Module 2: Core Concepts",
     description: "Master the fundamental ideas that will form the foundation of your learning.",
-    completion: 75,
     lessons: [
       {
         id: "2-1",
         title: "Understanding the Basics",
-        duration: "12 min",
         type: "video",
-        completed: true,
-        description: "Explore the fundamental concepts that form the basis of this subject."
+        content: "Explore the fundamental concepts that form the basis of this subject.",
+        duration: "12 min",
       },
       {
         id: "2-2",
         title: "Key Terminology",
-        duration: "10 min",
         type: "text",
-        completed: true,
-        description: "Learn essential terms and definitions you'll encounter throughout the course."
-      },
-      {
-        id: "2-3",
-        title: "Interactive Example",
-        duration: "15 min",
-        type: "exercise",
-        completed: true,
-        description: "Apply what you've learned in a hands-on exercise."
-      },
-      {
-        id: "2-4",
-        title: "Advanced Techniques",
-        duration: "18 min",
-        type: "video",
-        completed: false,
-        description: "Discover more sophisticated approaches to problem-solving in this field."
-      }
-    ]
-  },
-  {
-    id: 3,
-    title: "Module 3: Practical Applications",
-    description: "Apply your knowledge to real-world scenarios and projects.",
-    completion: 33,
-    lessons: [
-      {
-        id: "3-1",
-        title: "Case Study: Success Story",
-        duration: "14 min",
-        type: "video",
-        completed: true,
-        description: "Analyze a real-world success story and extract valuable insights."
-      },
-      {
-        id: "3-2",
-        title: "Project Documentation",
-        duration: "N/A",
-        type: "pdf",
-        completed: false,
-        description: "Detailed guidelines for completing your project work."
-      },
-      {
-        id: "3-3",
-        title: "Guided Project",
-        duration: "45 min",
-        type: "exercise",
-        completed: false,
-        description: "Follow step-by-step instructions to complete a comprehensive project."
-      }
-    ]
-  },
-  {
-    id: 4,
-    title: "Module 4: Advanced Topics",
-    description: "Dive deeper into specialized areas and cutting-edge developments.",
-    completion: 0,
-    lessons: [
-      {
-        id: "4-1",
-        title: "Latest Research Findings",
-        duration: "20 min",
-        type: "video",
-        completed: false,
-        description: "Explore recent discoveries and their implications for the field."
-      },
-      {
-        id: "4-2",
-        title: "Expert Interview",
-        duration: "25 min",
-        type: "video",
-        completed: false,
-        description: "Learn from an industry expert about current trends and future directions."
-      },
-      {
-        id: "4-3",
-        title: "Final Assessment",
-        duration: "30 min",
-        type: "exercise",
-        completed: false,
-        description: "Demonstrate your mastery of the course material through a comprehensive assessment."
+        content: "Learn essential terms and definitions you'll encounter throughout the course.",
+        duration: "10 min",
       }
     ]
   }
 ];
 
-const mediaTypeIcon = (type: string) => {
-  switch (type) {
-    case 'video':
-      return <Video className="h-4 w-4" />;
-    case 'text':
-      return <FileText className="h-4 w-4" />;
-    case 'pdf':
-      return <File className="h-4 w-4" />;
-    case 'image':
-      return <Image className="h-4 w-4" />;
-    case 'exercise':
-      return <BookOpen className="h-4 w-4" />;
-    default:
-      return <File className="h-4 w-4" />;
-  }
-};
-
 const CourseContent = () => {
   const { id } = useParams();
-  const [activeModule, setActiveModule] = useState<number | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseDescription, setCourseDescription] = useState("");
   const [resources, setResources] = useState<Resource[]>([]);
-  const [modules, setModules] = useState(courseLessons);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [editingCourseInfo, setEditingCourseInfo] = useState(false);
+  const [editingModuleId, setEditingModuleId] = useState<number | null>(null);
   const { hasRole } = useAuth();
   
-  const canEdit = hasRole(["admin", "instructor"]);
-  
   const courseId = parseInt(id || "0");
-  const courseData = getCourseById(courseId);
-  
-  const courseTitle = courseData?.title || "Advanced React Development";
-  const courseDescription = courseData?.description || 
-    "Master modern React practices including hooks, context API, and advanced state management techniques.";
+  const canEdit = hasRole(["admin", "instructor"]);
+  const isLearner = hasRole(["learner"]);
   
   useEffect(() => {
+    // Get course data
+    const courseData = getCourseById(courseId);
+    setCourseTitle(courseData?.title || "");
+    setCourseDescription(courseData?.description || "");
+    
+    // Get resources
     const storageKey = `course-${courseId}-resources`;
     const savedResources = JSON.parse(localStorage.getItem(storageKey) || "[]");
     setResources(savedResources);
     
+    // Get modules
     const modulesKey = `course-${courseId}-modules`;
     const savedModules = JSON.parse(localStorage.getItem(modulesKey) || "null");
     if (savedModules) {
       setModules(savedModules);
+    } else {
+      // Use default modules if none exist
+      setModules(defaultModules);
     }
   }, [courseId]);
   
-  const toggleModule = (moduleId: number) => {
-    if (activeModule === moduleId) {
-      setActiveModule(null);
-    } else {
-      setActiveModule(moduleId);
-    }
+  const handleUpdateCourseInfo = () => {
+    // In a real app, this would save to a backend
+    // For now, just update local state and show toast
+    setEditingCourseInfo(false);
+    toast({
+      title: "Course Updated",
+      description: "Course information has been updated successfully."
+    });
   };
   
-  const handleFileUploaded = (file: File) => {
-    setCurrentFile(file);
-  };
-  
-  const handleUploadComplete = () => {
-    setUploading(true);
+  const handleAddModule = () => {
+    const newModule: Module = {
+      id: Date.now(),
+      title: `Module ${modules.length + 1}`,
+      description: "Enter module description",
+      lessons: []
+    };
     
-    setTimeout(() => {
-      setUploading(false);
-      setCurrentFile(null);
-      
-      toast({
-        title: "File Uploaded",
-        description: "Your file has been uploaded successfully.",
-      });
-    }, 1500);
+    setModules([...modules, newModule]);
+    setEditingModuleId(newModule.id);
   };
   
-  const handleResourceAdded = (newResource: Resource) => {
-    setResources([...resources, newResource]);
-  };
-  
-  const handleModuleUpdate = (updatedModule: any) => {
+  const handleSaveModule = (updatedModule: Module) => {
     const updatedModules = modules.map(module => 
       module.id === updatedModule.id ? updatedModule : module
     );
     
     setModules(updatedModules);
+    setEditingModuleId(null);
     
+    // Save to localStorage
     const modulesKey = `course-${courseId}-modules`;
     localStorage.setItem(modulesKey, JSON.stringify(updatedModules));
+    
+    toast({
+      title: "Module Saved",
+      description: "Module has been saved successfully."
+    });
   };
   
-  const openResource = (resource: Resource) => {
-    window.open(resource.url, '_blank');
+  const handleResourceAdded = (newResource: Resource) => {
+    const updatedResources = [...resources, newResource];
+    setResources(updatedResources);
+    
+    // Save to localStorage
+    const storageKey = `course-${courseId}-resources`;
+    localStorage.setItem(storageKey, JSON.stringify(updatedResources));
+  };
+  
+  const handleEmbedContent = (embedData: EmbedData) => {
+    // Add embedded content to course overview
+    // In a real app, this would add HTML to the course description
+    console.log("Embedding content:", embedData);
+    toast({
+      title: "Content Embedded",
+      description: `${embedData.title} has been embedded in the course.`
+    });
   };
   
   return (
@@ -265,131 +178,175 @@ const CourseContent = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h1 className="text-2xl font-display font-semibold mb-2">{courseTitle}</h1>
-                    <p className="text-muted-foreground mb-4">{courseDescription}</p>
+              {editingCourseInfo ? (
+                <div className="p-6 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Course Title</label>
+                    <Input 
+                      value={courseTitle} 
+                      onChange={(e) => setCourseTitle(e.target.value)}
+                      className="text-2xl font-semibold"
+                    />
                   </div>
                   
-                  {canEdit && (
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="flex items-center gap-2">
-                          <Upload className="h-4 w-4" />
-                          <span>Upload Content</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Upload Course Material</DialogTitle>
-                          <DialogDescription>
-                            Upload videos, documents, or other resources for your course.
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="py-4">
-                          <FileUploader onFileUploaded={handleFileUploaded} />
-                        </div>
-                        
-                        <DialogFooter>
-                          <Button
-                            type="submit"
-                            onClick={handleUploadComplete}
-                            disabled={!currentFile || uploading}
-                          >
-                            {uploading ? "Uploading..." : "Upload to Course"}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Course Description</label>
+                    <RichTextEditor 
+                      initialValue={courseDescription} 
+                      onChange={setCourseDescription}
+                      placeholder="Enter course description..."
+                    />
+                  </div>
+                  
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        Embed Content
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px]">
+                      <DialogHeader>
+                        <DialogTitle>Embed Content in Course Overview</DialogTitle>
+                      </DialogHeader>
+                      <ContentEmbedder onEmbed={handleEmbedContent} />
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setEditingCourseInfo(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleUpdateCourseInfo}>
+                      Save Changes
+                    </Button>
+                  </div>
                 </div>
-                
-                <Tabs defaultValue="content" className="w-full">
-                  <TabsList className="mb-4">
-                    <TabsTrigger value="content">Course Content</TabsTrigger>
-                    {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
-                    <TabsTrigger value="notes">My Notes</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="content" className="space-y-4">
-                    {modules.map((module) => (
-                      <EditableModule 
-                        key={module.id}
-                        module={module}
-                        onModuleUpdate={handleModuleUpdate}
-                        resources={resources}
+              ) : (
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h1 className="text-2xl font-display font-semibold mb-2">
+                        {courseTitle || "Blockchain Technology"}
+                      </h1>
+                      
+                      <div 
+                        className="prose prose-sm max-w-none text-muted-foreground mb-4"
+                        dangerouslySetInnerHTML={{ __html: courseDescription || "Blockchain is the backbone of a new digital anatomy, a ledger not just for cryptocurrency enthusiasts but for anyone interested in secure, transparent, and decentralized systems." }}
                       />
-                    ))}
-                  </TabsContent>
+                    </div>
+                    
+                    {canEdit && (
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setEditingCourseInfo(true)}>
+                          Edit Course Info
+                        </Button>
+                        <Button>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Content
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Tabs defaultValue="content" className="w-full">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="content">Course Content</TabsTrigger>
+                      {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
+                      <TabsTrigger value="notes">My Notes</TabsTrigger>
+                    </TabsList>
 
-                  {canEdit && (
-                    <TabsContent value="resources">
-                      <div className="border rounded-lg p-6">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-medium">Course Resources</h3>
-                          <ResourceUploader 
-                            courseId={courseId} 
-                            onResourceAdded={handleResourceAdded} 
-                          />
+                    <TabsContent value="content" className="space-y-4">
+                      {canEdit && (
+                        <div className="mb-4">
+                          <Button onClick={handleAddModule}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Module
+                          </Button>
                         </div>
-                        
-                        {resources.length > 0 ? (
-                          <ul className="space-y-3">
-                            {resources.map((resource) => (
-                              <li 
-                                key={resource.id} 
-                                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md border"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <File className="h-4 w-4 text-muted-foreground" />
-                                  <span 
-                                    className="text-blue-600 hover:underline cursor-pointer"
-                                    onClick={() => openResource(resource)}
-                                  >
-                                    {resource.name}
-                                  </span>
-                                </div>
-                                <div className="flex items-center">
-                                  <span className="text-xs text-muted-foreground mr-3">
-                                    {new Date(resource.dateAdded).toLocaleDateString()}
-                                  </span>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => openResource(resource)}
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
+                      )}
+                      
+                      {modules.map((module) => (
+                        editingModuleId === module.id ? (
+                          <ModuleEditor 
+                            key={module.id}
+                            module={module}
+                            onSave={handleSaveModule}
+                            onCancel={() => setEditingModuleId(null)}
+                          />
                         ) : (
-                          <p className="text-muted-foreground text-center py-4">
-                            No resources yet. Add resources using the button above.
-                          </p>
-                        )}
+                          <ModuleDisplay 
+                            key={module.id}
+                            module={module}
+                            onEdit={() => canEdit && setEditingModuleId(module.id)}
+                          />
+                        )
+                      ))}
+                    </TabsContent>
+
+                    {canEdit && (
+                      <TabsContent value="resources">
+                        <div className="border rounded-lg p-6">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-medium">Course Resources</h3>
+                            <ResourceUploader 
+                              courseId={courseId} 
+                              onResourceAdded={handleResourceAdded} 
+                            />
+                          </div>
+                          
+                          {resources.length > 0 ? (
+                            <ul className="space-y-3">
+                              {resources.map((resource) => (
+                                <li 
+                                  key={resource.id} 
+                                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md border"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline">{resource.type.split('/')[0]}</Badge>
+                                    <span className="text-blue-600 hover:underline cursor-pointer">
+                                      {resource.name}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <span className="text-xs text-muted-foreground mr-3">
+                                      {new Date(resource.dateAdded).toLocaleDateString()}
+                                    </span>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => window.open(resource.url, '_blank')}
+                                    >
+                                      View
+                                    </Button>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-muted-foreground text-center py-4">
+                              No resources yet. Add resources using the button above.
+                            </p>
+                          )}
+                        </div>
+                      </TabsContent>
+                    )}
+
+                    <TabsContent value="notes">
+                      <div className="border rounded-lg p-6 text-center">
+                        <h3 className="text-lg font-medium mb-2">My Notes</h3>
+                        <p className="text-muted-foreground mb-4">You haven't created any notes for this course yet.</p>
+                        <Button variant="outline">Create Note</Button>
                       </div>
                     </TabsContent>
-                  )}
-
-                  <TabsContent value="notes">
-                    <div className="border rounded-lg p-6 text-center">
-                      <h3 className="text-lg font-medium mb-2">My Notes</h3>
-                      <p className="text-muted-foreground mb-4">You haven't created any notes for this course yet.</p>
-                      <Button variant="outline">Create Note</Button>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
+                  </Tabs>
+                </div>
+              )}
             </div>
           </div>
           
           <div>
-            <div className="bg-white rounded-xl border border-border overflow-hidden sticky top-4">
-              <div className="p-6">
+            <Card className="sticky top-4">
+              <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">Your Progress</h2>
                 <div className="mb-6">
                   <div className="flex justify-between mb-2">
@@ -432,8 +389,8 @@ const CourseContent = () => {
                   
                   <Button className="w-full">Resume Course</Button>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>

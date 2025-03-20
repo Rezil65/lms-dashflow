@@ -32,7 +32,12 @@ const rolePermissions: Record<UserRole, string[]> = {
     "manage_settings",
     "send_communications", 
     "manage_payments", 
-    "manage_roles"
+    "manage_roles",
+    "edit_course_modules",
+    "edit_course_resources",
+    "add_course_modules",
+    "delete_course_modules",
+    "manage_certificates"
   ],
   instructor: [
     "view_dashboard", 
@@ -40,14 +45,19 @@ const rolePermissions: Record<UserRole, string[]> = {
     "manage_own_courses", 
     "manage_own_content", 
     "view_course_analytics", 
-    "send_communications"
+    "send_communications",
+    "edit_course_modules",
+    "edit_course_resources",
+    "add_course_modules"
   ],
   learner: [
     "view_dashboard", 
     "view_courses", 
     "view_own_progress", 
     "submit_assignments", 
-    "view_catalog"
+    "view_catalog",
+    "view_course_modules",
+    "view_course_resources"
   ],
 };
 
