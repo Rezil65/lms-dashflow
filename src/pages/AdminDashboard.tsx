@@ -12,9 +12,12 @@ import PaymentManagement from "@/components/admin/PaymentManagement";
 import Settings from "@/components/admin/Settings";
 import RoleAccess from "@/components/admin/RoleAccess";
 import HelpSupport from "@/components/admin/HelpSupport";
+import UserGroups from "@/components/admin/UserGroups";
+import { useAuth } from "@/context/AuthContext";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  const { hasPermission } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,6 +41,7 @@ const AdminDashboard = () => {
             <TabsList className="w-full flex justify-start overflow-x-auto">
               <TabsTrigger value="overview">Dashboard</TabsTrigger>
               <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="groups">User Groups</TabsTrigger>
               <TabsTrigger value="courses">Courses</TabsTrigger>
               <TabsTrigger value="content">Content Library</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -55,6 +59,10 @@ const AdminDashboard = () => {
           
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+          
+          <TabsContent value="groups">
+            <UserGroups />
           </TabsContent>
           
           <TabsContent value="courses">

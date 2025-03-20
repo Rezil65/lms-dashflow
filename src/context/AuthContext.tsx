@@ -37,7 +37,13 @@ const rolePermissions: Record<UserRole, string[]> = {
     "edit_course_resources",
     "add_course_modules",
     "delete_course_modules",
-    "manage_certificates"
+    "manage_certificates",
+    "manage_groups",
+    "assign_courses",
+    "revoke_courses",
+    "delete_users",
+    "import_users",
+    "export_users"
   ],
   instructor: [
     "view_dashboard", 
@@ -48,7 +54,9 @@ const rolePermissions: Record<UserRole, string[]> = {
     "send_communications",
     "edit_course_modules",
     "edit_course_resources",
-    "add_course_modules"
+    "add_course_modules",
+    "view_group_members",
+    "view_assigned_learners"
   ],
   learner: [
     "view_dashboard", 
