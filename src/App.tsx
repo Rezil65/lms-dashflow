@@ -17,6 +17,7 @@ import MfaSetup from "./pages/MfaSetup";
 import ProfilePage from "./pages/ProfilePage";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PermissionGuard from "./components/PermissionGuard";
 
 const queryClient = new QueryClient();
 
@@ -101,9 +102,9 @@ const App = () => (
             <Route 
               path="/create-course" 
               element={
-                <ProtectedRoute allowedRoles={["admin", "instructor"]}>
+                <PermissionGuard requiredPermission="manage_courses" redirectTo="/admin">
                   <CourseCreation />
-                </ProtectedRoute>
+                </PermissionGuard>
               } 
             />
             

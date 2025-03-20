@@ -14,10 +14,36 @@ import RoleAccess from "@/components/admin/RoleAccess";
 import HelpSupport from "@/components/admin/HelpSupport";
 import UserGroups from "@/components/admin/UserGroups";
 import { useAuth } from "@/context/AuthContext";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const { hasPermission } = useAuth();
+
+  const tabs = [
+    { id: "overview", label: "Dashboard", component: <DashboardOverview />, permission: "view_dashboard" },
+    { id: "users", label: "Users", component: <UserManagement />, permission: "manage_users" },
+    { id: "groups", label: "User Groups", component: <UserGroups />, permission: "manage_groups" },
+    { id: "courses", label: "Courses", component: <CourseManagement />, permission: "manage_courses" },
+    { id: "content", label: "Content Library", component: <ContentLibrary />, permission: "manage_content" },
+    { id: "analytics", label: "Analytics", component: <Analytics />, permission: "view_analytics" },
+    { id: "communication", label: "Communication", component: <Communication />, permission: "send_communications" },
+    { id: "payments", label: "Payments", component: <PaymentManagement />, permission: "manage_payments" },
+    { id: "settings", label: "Settings", component: <Settings />, permission: "manage_settings" },
+    { id: "roles", label: "Access Control", component: <RoleAccess />, permission: "manage_roles" },
+    { id: "help", label: "Help & Support", component: <HelpSupport />, permission: null },
+  ];
+
+  // Filter tabs based on permissions
+  const authorizedTabs = tabs.filter(tab => 
+    tab.permission === null || hasPermission(tab.permission)
+  );
+
+  // If current active tab is not authorized, default to the first authorized tab
+  if (authorizedTabs.length > 0 && !authorizedTabs.some(tab => tab.id === activeTab)) {
+    setActiveTab(authorizedTabs[0].id);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -31,72 +57,38 @@ const AdminDashboard = () => {
           </div>
         </div>
         
-        <Tabs 
-          defaultValue="overview" 
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
-        >
-          <div className="bg-white rounded-lg border shadow-sm p-1">
-            <TabsList className="w-full flex justify-start overflow-x-auto">
-              <TabsTrigger value="overview">Dashboard</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="groups">User Groups</TabsTrigger>
-              <TabsTrigger value="courses">Courses</TabsTrigger>
-              <TabsTrigger value="content">Content Library</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="communication">Communication</TabsTrigger>
-              <TabsTrigger value="payments">Payments</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-              <TabsTrigger value="roles">Access Control</TabsTrigger>
-              <TabsTrigger value="help">Help & Support</TabsTrigger>
-            </TabsList>
-          </div>
-          
-          <TabsContent value="overview">
-            <DashboardOverview />
-          </TabsContent>
-          
-          <TabsContent value="users">
-            <UserManagement />
-          </TabsContent>
-          
-          <TabsContent value="groups">
-            <UserGroups />
-          </TabsContent>
-          
-          <TabsContent value="courses">
-            <CourseManagement />
-          </TabsContent>
-          
-          <TabsContent value="content">
-            <ContentLibrary />
-          </TabsContent>
-          
-          <TabsContent value="analytics">
-            <Analytics />
-          </TabsContent>
-          
-          <TabsContent value="communication">
-            <Communication />
-          </TabsContent>
-          
-          <TabsContent value="payments">
-            <PaymentManagement />
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <Settings />
-          </TabsContent>
-          
-          <TabsContent value="roles">
-            <RoleAccess />
-          </TabsContent>
-          
-          <TabsContent value="help">
-            <HelpSupport />
-          </TabsContent>
-        </Tabs>
+        {authorizedTabs.length === 0 ? (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              You don't have permission to access any admin features. Please contact your system administrator.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <Tabs 
+            defaultValue={authorizedTabs[0]?.id || "overview"} 
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-6"
+          >
+            <div className="bg-white rounded-lg border shadow-sm p-1">
+              <TabsList className="w-full flex justify-start overflow-x-auto">
+                {authorizedTabs.map(tab => (
+                  <TabsTrigger key={tab.id} value={tab.id}>
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+            
+            {authorizedTabs.map(tab => (
+              <TabsContent key={tab.id} value={tab.id}>
+                {tab.component}
+              </TabsContent>
+            ))}
+          </Tabs>
+        )}
       </main>
     </div>
   );
