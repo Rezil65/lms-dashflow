@@ -8,6 +8,7 @@ import { AlertCircle } from "lucide-react";
 interface PermissionGuardProps {
   children: ReactNode;
   requiredPermission?: string;
+  requiredPermissions?: string[];
   fallback?: ReactNode;
   redirectTo?: string;
 }
@@ -15,18 +16,40 @@ interface PermissionGuardProps {
 const PermissionGuard = ({
   children,
   requiredPermission,
+  requiredPermissions = [],
   fallback,
   redirectTo,
 }: PermissionGuardProps) => {
-  const { isAuthenticated, hasPermission } = useAuth();
+  const { user, isAuthenticated, hasPermission } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredPermission && !hasPermission(requiredPermission)) {
+  // Check if user has the single required permission
+  const hasRequiredPermission = requiredPermission ? hasPermission(requiredPermission) : true;
+  
+  // Check if user has any of the required permissions
+  const hasAnyRequiredPermission = requiredPermissions.length > 0 
+    ? requiredPermissions.some(permission => hasPermission(permission))
+    : true;
+
+  if (!hasRequiredPermission || !hasAnyRequiredPermission) {
     if (redirectTo) {
       return <Navigate to={redirectTo} replace />;
+    }
+
+    // Default redirect based on user role if no specific redirectTo is provided
+    if (!redirectTo && user) {
+      const roleBasedRedirect = {
+        admin: "/admin",
+        instructor: "/instructor",
+        learner: "/learner"
+      }[user.role];
+      
+      if (roleBasedRedirect) {
+        return <Navigate to={roleBasedRedirect} replace />;
+      }
     }
 
     if (fallback) {

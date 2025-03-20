@@ -82,7 +82,7 @@ const App = () => (
               } 
             />
             
-            {/* Course routes - protect course routes based on role */}
+            {/* Course routes */}
             <Route 
               path="/course/:id" 
               element={
@@ -91,18 +91,26 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Course content routes with permission guards */}
             <Route 
               path="/course/:id/content" 
               element={
-                <ProtectedRoute>
+                <PermissionGuard 
+                  requiredPermissions={["manage_courses", "edit_course_modules", "manage_own_courses", "view_course_modules"]}
+                >
                   <CourseContent />
-                </ProtectedRoute>
+                </PermissionGuard>
               } 
             />
+            
             <Route 
               path="/create-course" 
               element={
-                <PermissionGuard requiredPermission="manage_courses" redirectTo="/admin">
+                <PermissionGuard 
+                  requiredPermissions={["manage_courses", "manage_own_courses"]} 
+                  redirectTo="/admin"
+                >
                   <CourseCreation />
                 </PermissionGuard>
               } 

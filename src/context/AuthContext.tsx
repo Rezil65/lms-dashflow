@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // Define user types and roles
@@ -10,6 +9,7 @@ export interface User {
   role: UserRole;
   name?: string;
   groups?: string[];
+  permissions?: string[];
 }
 
 interface AuthContextType {
@@ -46,7 +46,11 @@ const rolePermissions: Record<UserRole, string[]> = {
     "revoke_courses",
     "delete_users",
     "import_users",
-    "export_users"
+    "export_users",
+    "embed_iframe",
+    "embed_html",
+    "embed_video",
+    "advanced_text_editing"
   ],
   instructor: [
     "view_dashboard", 
@@ -59,7 +63,10 @@ const rolePermissions: Record<UserRole, string[]> = {
     "edit_course_resources",
     "add_course_modules",
     "view_group_members",
-    "view_assigned_learners"
+    "view_assigned_learners",
+    "embed_iframe",
+    "embed_video",
+    "advanced_text_editing"
   ],
   learner: [
     "view_dashboard", 
@@ -92,9 +99,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (userData: User) => {
-    setUser(userData);
+    // Add role-based permissions to the user object
+    const userWithPermissions = {
+      ...userData,
+      permissions: rolePermissions[userData.role]
+    };
+    
+    setUser(userWithPermissions);
     setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userWithPermissions));
   };
 
   const logout = () => {
@@ -107,6 +120,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     
     const updatedUser = { ...user, ...updates };
+    
+    // If role was updated, update permissions as well
+    if (updates.role && updates.role !== user.role) {
+      updatedUser.permissions = rolePermissions[updates.role];
+    }
+    
     setUser(updatedUser);
     localStorage.setItem("user", JSON.stringify(updatedUser));
   };
@@ -114,6 +133,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     
+    // First check explicit user permissions if defined
+    if (user.permissions && user.permissions.includes(permission)) {
+      return true;
+    }
+    
+    // Fallback to role-based permissions
     const userPermissions = rolePermissions[user.role];
     return userPermissions.includes(permission);
   };

@@ -18,10 +18,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Plus, Trash, Video, FileText, File, Pencil, Save, X } from "lucide-react";
+import { 
+  Plus, Trash, Video, FileText, File, Pencil, Save, X, Image, Code, ExternalLink 
+} from "lucide-react";
 import RichTextEditor from "./RichTextEditor";
 import ContentEmbedder, { EmbedData } from "./ContentEmbedder";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/AuthContext";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export interface Lesson {
   id: string;
@@ -30,6 +34,7 @@ export interface Lesson {
   content: string;
   duration?: string;
   embedData?: EmbedData;
+  htmlContent?: string;
 }
 
 export interface Module {
@@ -46,14 +51,21 @@ interface ModuleEditorProps {
 }
 
 const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
+  const { hasPermission } = useAuth();
   const [editedModule, setEditedModule] = useState<Module>({ ...module });
   const [addingLesson, setAddingLesson] = useState(false);
-  const [lessonType, setLessonType] = useState<"text" | "embed">("text");
+  const [lessonType, setLessonType] = useState<"text" | "embed" | "iframe" | "html" | "video">("text");
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonContent, setLessonContent] = useState("");
+  const [htmlContent, setHtmlContent] = useState("");
+  const [iframeUrl, setIframeUrl] = useState("");
+  const [iframeWidth, setIframeWidth] = useState("100%");
+  const [iframeHeight, setIframeHeight] = useState("400px");
   const [lessonDuration, setLessonDuration] = useState("");
   const [openAccordion, setOpenAccordion] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("editor");
 
+  // Handle module title and description changes
   const handleModuleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedModule({ ...editedModule, title: e.target.value });
   };
@@ -62,32 +74,72 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
     setEditedModule({ ...editedModule, description: e.target.value });
   };
 
+  // Initialize lesson creation
   const handleAddLesson = () => {
     setAddingLesson(true);
     setLessonTitle("");
     setLessonContent("");
+    setHtmlContent("");
+    setIframeUrl("");
+    setIframeWidth("100%");
+    setIframeHeight("400px");
     setLessonDuration("");
     setLessonType("text");
+    setActiveTab("editor");
   };
 
+  // Save lesson based on type
   const handleSaveLesson = () => {
     if (!lessonTitle.trim()) {
       alert("Please enter a lesson title");
       return;
     }
 
-    if (lessonType === "text" && !lessonContent.trim()) {
-      alert("Please enter lesson content");
-      return;
-    }
-
-    const newLesson: Lesson = {
+    let newLesson: Lesson = {
       id: `${module.id}-${Date.now()}`,
       title: lessonTitle,
       type: lessonType,
-      content: lessonContent,
+      content: "",
       duration: lessonDuration || "N/A",
     };
+
+    switch (lessonType) {
+      case "text":
+        if (!lessonContent.trim()) {
+          alert("Please enter lesson content");
+          return;
+        }
+        newLesson.content = lessonContent;
+        break;
+      
+      case "html":
+        if (!htmlContent.trim()) {
+          alert("Please enter HTML content");
+          return;
+        }
+        newLesson.content = "HTML Content";
+        newLesson.htmlContent = htmlContent;
+        break;
+      
+      case "iframe":
+        if (!iframeUrl.trim()) {
+          alert("Please enter iframe URL");
+          return;
+        }
+        newLesson.content = "Iframe Content";
+        newLesson.embedData = {
+          type: "iframe",
+          url: iframeUrl,
+          width: iframeWidth,
+          height: iframeHeight,
+          title: lessonTitle
+        };
+        break;
+      
+      case "video":
+        // This will be handled by ContentEmbedder component
+        return;
+    }
 
     setEditedModule({
       ...editedModule,
@@ -97,6 +149,7 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
     setAddingLesson(false);
   };
 
+  // Remove a lesson from the module
   const handleRemoveLesson = (lessonId: string) => {
     setEditedModule({
       ...editedModule,
@@ -104,10 +157,11 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
     });
   };
 
+  // Handle embedding content (video, iframe, etc.)
   const handleEmbedContent = (embedData: EmbedData) => {
     const newLesson: Lesson = {
       id: `${module.id}-${Date.now()}`,
-      title: embedData.title,
+      title: embedData.title || lessonTitle,
       type: embedData.type,
       content: embedData.type === "video" ? "Video content" : "Embedded content",
       duration: lessonDuration || "N/A",
@@ -122,6 +176,7 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
     setAddingLesson(false);
   };
 
+  // Get icon based on lesson type
   const getLessonIcon = (type: string) => {
     switch (type) {
       case "video":
@@ -129,8 +184,11 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
       case "text":
         return <FileText className="h-4 w-4" />;
       case "html":
+        return <Code className="h-4 w-4" />;
       case "iframe":
-        return <FileText className="h-4 w-4" />;
+        return <ExternalLink className="h-4 w-4" />;
+      case "image":
+        return <Image className="h-4 w-4" />;
       default:
         return <File className="h-4 w-4" />;
     }
@@ -160,18 +218,18 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-semibold">Lessons</h3>
             <div className="flex gap-2">
-              <Dialog>
+              <Dialog open={addingLesson} onOpenChange={setAddingLesson}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm" onClick={() => handleAddLesson()}>
                     <Plus className="h-3.5 w-3.5 mr-1" />
                     Add Lesson
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="sm:max-w-[700px]">
                   <DialogHeader>
                     <DialogTitle>Add New Lesson</DialogTitle>
                     <DialogDescription>
-                      Create a new lesson for this module
+                      Create a new lesson with various content types
                     </DialogDescription>
                   </DialogHeader>
 
@@ -202,7 +260,7 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Content Type</label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
                           variant={lessonType === "text" ? "default" : "outline"}
@@ -210,30 +268,137 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
                           className="flex-1"
                         >
                           <FileText className="h-4 w-4 mr-2" />
-                          Text Content
+                          Text
                         </Button>
                         <Button
                           type="button"
-                          variant={lessonType === "embed" ? "default" : "outline"}
-                          onClick={() => setLessonType("embed")}
+                          variant={lessonType === "html" ? "default" : "outline"}
+                          onClick={() => setLessonType("html")}
                           className="flex-1"
+                          disabled={!hasPermission("embed_html")}
+                        >
+                          <Code className="h-4 w-4 mr-2" />
+                          HTML
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={lessonType === "iframe" ? "default" : "outline"}
+                          onClick={() => setLessonType("iframe")}
+                          className="flex-1"
+                          disabled={!hasPermission("embed_iframe")}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-2" />
+                          iFrame
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={lessonType === "video" ? "default" : "outline"}
+                          onClick={() => setLessonType("video")}
+                          className="flex-1"
+                          disabled={!hasPermission("embed_video")}
                         >
                           <Video className="h-4 w-4 mr-2" />
-                          Embed Content
+                          Video
                         </Button>
                       </div>
                     </div>
 
-                    {lessonType === "text" ? (
+                    {/* Content editors based on selected content type */}
+                    {lessonType === "text" && (
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Content</label>
-                        <RichTextEditor
-                          initialValue={lessonContent}
-                          onChange={setLessonContent}
-                          placeholder="Enter lesson content here..."
-                        />
+                        <label className="text-sm font-medium">Text Content</label>
+                        <Tabs value={activeTab} onValueChange={setActiveTab}>
+                          <TabsList>
+                            <TabsTrigger value="editor">Visual Editor</TabsTrigger>
+                            <TabsTrigger 
+                              value="html" 
+                              disabled={!hasPermission("advanced_text_editing")}
+                            >
+                              HTML Editor
+                            </TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="editor">
+                            <RichTextEditor
+                              initialValue={lessonContent}
+                              onChange={setLessonContent}
+                              placeholder="Enter lesson content here..."
+                            />
+                          </TabsContent>
+                          <TabsContent value="html">
+                            <Textarea
+                              value={lessonContent}
+                              onChange={(e) => setLessonContent(e.target.value)}
+                              placeholder="Enter HTML content here..."
+                              className="min-h-[200px] font-mono text-sm"
+                            />
+                          </TabsContent>
+                        </Tabs>
                       </div>
-                    ) : (
+                    )}
+
+                    {lessonType === "html" && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">HTML Content</label>
+                        <Textarea
+                          value={htmlContent}
+                          onChange={(e) => setHtmlContent(e.target.value)}
+                          placeholder="Enter HTML content here..."
+                          className="min-h-[200px] font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Add raw HTML that will be rendered in the lesson.
+                          Note: Scripts will be sanitized for security.
+                        </p>
+                      </div>
+                    )}
+
+                    {lessonType === "iframe" && (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">iFrame URL</label>
+                          <Input
+                            value={iframeUrl}
+                            onChange={(e) => setIframeUrl(e.target.value)}
+                            placeholder="https://example.com/embed"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Width</label>
+                            <Input
+                              value={iframeWidth}
+                              onChange={(e) => setIframeWidth(e.target.value)}
+                              placeholder="100% or pixel value"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Height</label>
+                            <Input
+                              value={iframeHeight}
+                              onChange={(e) => setIframeHeight(e.target.value)}
+                              placeholder="400px"
+                            />
+                          </div>
+                        </div>
+                        <div className="bg-muted p-4 rounded-md">
+                          <p className="text-xs text-muted-foreground mb-2">Preview:</p>
+                          {iframeUrl && (
+                            <div className="border rounded">
+                              <iframe 
+                                src={iframeUrl} 
+                                width={iframeWidth} 
+                                height={iframeHeight}
+                                title="Iframe Preview"
+                                className="border-0"
+                                sandbox="allow-scripts allow-same-origin allow-popups"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {lessonType === "video" && (
                       <ContentEmbedder onEmbed={handleEmbedContent} />
                     )}
                   </div>
@@ -246,7 +411,7 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
                     >
                       Cancel
                     </Button>
-                    {lessonType === "text" && (
+                    {lessonType !== "video" && (
                       <Button type="button" onClick={handleSaveLesson}>
                         Add Lesson
                       </Button>
@@ -300,6 +465,14 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
                         dangerouslySetInnerHTML={{ __html: lesson.content }}
                       />
                     )}
+                    {lesson.type === "html" && lesson.htmlContent && (
+                      <div className="border rounded p-4 bg-muted/20">
+                        <div
+                          className="prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: lesson.htmlContent }}
+                        />
+                      </div>
+                    )}
                     {lesson.embedData && (
                       <div className="relative rounded border overflow-hidden">
                         {lesson.type === "video" && (
@@ -310,6 +483,7 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
+                            title={lesson.title}
                           ></iframe>
                         )}
                         {lesson.type === "iframe" && (
@@ -318,6 +492,8 @@ const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
                             width={lesson.embedData.width}
                             height={lesson.embedData.height}
                             frameBorder="0"
+                            sandbox="allow-scripts allow-same-origin allow-popups"
+                            title={lesson.title}
                           ></iframe>
                         )}
                         {(lesson.type === "html" || lesson.type === "file") && (
