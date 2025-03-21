@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import NavTabs from "@/components/NavTabs";
 import Stats from "@/components/Stats";
 import CourseProgress from "@/components/CourseProgress";
-import RecommendedCourses from "@/components/RecommendedCourses";
+import AssignedCourses from "@/components/AssignedCourses";
 import LearningPaths from "@/components/LearningPaths";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -121,7 +121,7 @@ const LearnerDashboard = () => {
           </div>
           
           <div className="bg-white rounded-xl border border-border p-6 shadow-sm">
-            <RecommendedCourses />
+            <AssignedCourses />
           </div>
         </div>
         
