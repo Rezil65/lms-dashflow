@@ -22,6 +22,7 @@ export interface CourseDetails {
   lessonCount?: number;
   updatedAt?: string;
   embedContent?: EmbedData[];
+  createdAt: string; // Added for type compatibility
 }
 
 interface CourseDetailsEditorProps {
@@ -259,8 +260,7 @@ const CourseDetailsEditor = ({ courseDetails, onSave, onCancel }: CourseDetailsE
                         <FileImage className="h-10 w-10 text-muted-foreground mb-2" />
                         <p className="text-sm text-muted-foreground mb-2">No thumbnail selected</p>
                         <FileUploader 
-                          onFileUploaded={handleThumbnailUpload} 
-                          allowedFileTypes={["image/jpeg", "image/png", "image/gif"]}
+                          onFileUploaded={handleThumbnailUpload}
                           buttonText="Upload Thumbnail"
                         />
                       </div>

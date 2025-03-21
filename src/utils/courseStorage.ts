@@ -29,6 +29,10 @@ export interface Course {
   updatedAt?: string;
   modules?: Module[];
   embedContent?: EmbedData[];
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  price?: number;
+  isFeatured?: boolean;
+  tags?: string[];
 }
 
 // Get courses from local storage
@@ -44,6 +48,14 @@ export const getCourses = (): Course[] => {
 export const getCourse = (id: number): Course | null => {
   const courses = getCourses();
   return courses.find(course => course.id === id) || null;
+};
+
+// Alias for getCourse for compatibility
+export const getCourseById = getCourse;
+
+// Get total course count
+export const getTotalCourseCount = (): number => {
+  return getCourses().length;
 };
 
 // Add a new course
@@ -64,6 +76,11 @@ export const addCourse = (course: Omit<Course, 'id' | 'createdAt'>): Course => {
   localStorage.setItem('courses', JSON.stringify(courses));
   
   return newCourse;
+};
+
+// Save a course (alias for addCourse for compatibility)
+export const saveCourse = (courseData: Omit<Course, 'id' | 'createdAt'>): Course => {
+  return addCourse(courseData);
 };
 
 // Update an existing course

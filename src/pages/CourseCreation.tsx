@@ -107,7 +107,7 @@ const CourseCreation = () => {
         category: data.category,
         level: data.level,
         price: data.price,
-        duration: data.duration,
+        duration: `${data.duration} hours`,
         isFeatured: data.isFeatured,
         tags: data.tags,
         thumbnail: thumbnailPreview || undefined,

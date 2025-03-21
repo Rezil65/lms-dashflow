@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Upload, Video, FileText } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -9,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/use-toast";
-import { getCourseById } from "@/utils/courseStorage";
+import { getCourse } from "@/utils/courseStorage";
 import ResourceUploader, { Resource } from "@/components/ResourceUploader";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -80,7 +79,7 @@ const CourseContent = () => {
   
   useEffect(() => {
     // Get course data
-    const courseData = getCourseById(courseId);
+    const courseData = getCourse(courseId);
     setCourseTitle(courseData?.title || "");
     setCourseDescription(courseData?.description || "");
     

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, BookOpen, Calendar, Clock, Video, Edit, Pencil } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
@@ -6,7 +5,7 @@ import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { getCourse, updateCourse } from "@/utils/courseStorage";
+import { getCourse, updateCourse, Course } from "@/utils/courseStorage";
 import CourseDetailsEditor, { CourseDetails } from "@/components/CourseDetailsEditor";
 
 const CourseDetail = () => {
@@ -14,7 +13,7 @@ const CourseDetail = () => {
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [course, setCourse] = useState<CourseDetails | null>(null);
+  const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
 
   const canEditCourse = hasPermission("manage_courses") || 
@@ -54,13 +53,27 @@ const CourseDetail = () => {
 
   const handleSaveDetails = (updatedDetails: CourseDetails) => {
     try {
-      updateCourse(updatedDetails);
-      setCourse(updatedDetails);
-      setIsEditing(false);
-      toast({
-        title: "Course updated",
-        description: "Your course details have been saved successfully."
-      });
+      if (course) {
+        const updatedCourse: Course = {
+          ...course,
+          title: updatedDetails.title,
+          description: updatedDetails.description,
+          category: updatedDetails.category,
+          duration: updatedDetails.duration,
+          lessonCount: updatedDetails.lessonCount,
+          thumbnail: updatedDetails.thumbnail,
+          embedContent: updatedDetails.embedContent,
+          updatedAt: new Date().toISOString()
+        };
+        
+        updateCourse(updatedCourse);
+        setCourse(updatedCourse);
+        setIsEditing(false);
+        toast({
+          title: "Course updated",
+          description: "Your course details have been saved successfully."
+        });
+      }
     } catch (error) {
       console.error("Error updating course:", error);
       toast({

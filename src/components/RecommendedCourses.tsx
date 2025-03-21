@@ -2,16 +2,7 @@
 import { useEffect, useState } from "react";
 import { Book, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getCourses } from "@/utils/courseStorage";
-
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  category?: string;
-  duration?: number;
-  createdAt: string;
-}
+import { getCourses, Course } from "@/utils/courseStorage";
 
 const CourseItem = ({ course }: { course: Course }) => {
   const navigate = useNavigate();
@@ -31,7 +22,7 @@ const CourseItem = ({ course }: { course: Course }) => {
       <div className="flex-1">
         <h3 className="font-medium text-sm">{course.title}</h3>
         <p className="text-xs text-muted-foreground">
-          {course.category || "Uncategorized"} • {course.duration || 0} hours
+          {course.category || "Uncategorized"} • {course.duration || "0 hours"}
         </p>
       </div>
       <div className="text-xs text-muted-foreground flex items-center">
