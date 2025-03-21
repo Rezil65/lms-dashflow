@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { UploadCloud, X, FileText, Image, Video, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,10 @@ import { toast } from "@/components/ui/use-toast";
 
 interface FileUploaderProps {
   onFileUploaded?: (file: File) => void;
+  buttonText?: string;
 }
 
-const FileUploader = ({ onFileUploaded }: FileUploaderProps) => {
+const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -35,7 +35,6 @@ const FileUploader = ({ onFileUploaded }: FileUploaderProps) => {
   const processFile = (file: File) => {
     setSelectedFile(file);
     
-    // Determine file type for preview
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
     
     if (file.type.startsWith('image/')) {
@@ -134,7 +133,7 @@ const FileUploader = ({ onFileUploaded }: FileUploaderProps) => {
             </div>
             <Button variant="outline" size="sm" className="mt-2" asChild>
               <label className="cursor-pointer">
-                Browse Files
+                {buttonText}
                 <input
                   type="file"
                   className="hidden"
