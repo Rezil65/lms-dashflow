@@ -1,6 +1,5 @@
 
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import Header from "@/components/Header";
 import NavTabs from "@/components/NavTabs";
 import Stats from "@/components/Stats";
@@ -13,8 +12,27 @@ import { motion } from "framer-motion";
 const Index = () => {
   const navigate = useNavigate();
   
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+  
   const goToAdminDashboard = () => {
     navigate('/admin');
+  };
+  
+  const goToLearnerDashboard = () => {
+    navigate('/dashboard');
   };
   
   return (
@@ -24,62 +42,61 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8">
         <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="flex items-center justify-between mb-6"
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-8"
         >
-          <div className="flex items-center gap-3">
-            <img 
-              src="/lovable-uploads/740837a1-2c35-47c6-96c8-f108524cf541.png" 
-              alt="Kyureeus Logo" 
-              className="h-10 w-auto"
-            />
-            <h1 className="text-xl font-semibold bg-gradient-to-r from-lms-yellow via-lms-red to-lms-blue bg-clip-text text-transparent">
-              Learning Management System
-            </h1>
-          </div>
-          <Button onClick={goToAdminDashboard} className="relative overflow-hidden group">
-            <span className="relative z-10">Go to Admin Dashboard</span>
-            <span className="absolute inset-0 bg-gradient-to-r from-lms-red to-lms-blue opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-          </Button>
-        </motion.div>
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="mb-8"
-        >
-          <Stats />
-        </motion.div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="glass-card rounded-xl border border-border/50 p-6 shadow-sm"
+            variants={item}
+            className="flex items-center justify-between mb-6"
           >
-            <CourseProgress />
+            <div className="flex items-center gap-3">
+              <img 
+                src="/lovable-uploads/740837a1-2c35-47c6-96c8-f108524cf541.png" 
+                alt="Kyureeus Logo" 
+                className="h-10 w-auto"
+              />
+              <h1 className="text-xl font-semibold bg-gradient-to-r from-lms-yellow via-lms-red to-lms-blue bg-clip-text text-transparent">
+                Learning Management System
+              </h1>
+            </div>
+            <div className="space-x-3">
+              <Button onClick={goToLearnerDashboard} className="relative overflow-hidden group">
+                <span className="relative z-10">Go to Learner Dashboard</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-lms-blue to-lms-yellow opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+              </Button>
+              
+              <Button onClick={goToAdminDashboard} variant="outline" className="relative overflow-hidden group">
+                <span className="relative z-10">Go to Admin Dashboard</span>
+                <span className="absolute inset-0 bg-gradient-to-r from-lms-red to-lms-blue opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
+              </Button>
+            </div>
           </motion.div>
           
           <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="glass-card rounded-xl border border-border/50 p-6 shadow-sm"
+            variants={item}
+            className="mb-8"
           >
-            <AssignedCourses />
+            <Stats />
           </motion.div>
-        </div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <LearningPaths />
+          
+          <motion.div 
+            variants={item}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8"
+          >
+            <div className="glass-card rounded-xl border border-border/50 p-6 shadow-sm hover:shadow-md transition-all duration-300">
+              <CourseProgress />
+            </div>
+            
+            <div className="glass-card rounded-xl border border-border/50 p-6 shadow-sm hover:shadow-md transition-all duration-300">
+              <AssignedCourses />
+            </div>
+          </motion.div>
+          
+          <motion.div variants={item}>
+            <LearningPaths />
+          </motion.div>
         </motion.div>
       </main>
     </div>
