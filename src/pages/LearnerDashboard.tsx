@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, ChevronRight, Clock, GraduationCap, Book, Search } from "lucide-react";
@@ -37,8 +36,8 @@ const LearnerDashboard = () => {
     return courses.length;
   };
 
-  const handleCourseClick = (courseId: string) => {
-    navigate(`/course/${courseId}/content`);
+  const handleCourseClick = (courseId: number) => {
+    navigate(`/course/${courseId.toString()}/content`);
   };
 
   const filteredCourses = courses.filter(course => 

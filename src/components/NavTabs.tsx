@@ -18,7 +18,7 @@ const NavTabs = () => {
   const tabs = [
     { id: "overview", label: "Overview", icon: LayoutDashboard, path: "/dashboard" },
     { id: "courses", label: "Courses", icon: BookOpen, path: "/courses" },
-    { id: "learning", label: "Learning", icon: Graduation, path: "/learning" },
+    { id: "learning", label: "Learning", icon: GraduationCap, path: "/learning" },
     { id: "profile", label: "Profile", icon: User, path: "/profile" },
     { id: "settings", label: "Settings", icon: Settings, path: "/settings" },
   ];

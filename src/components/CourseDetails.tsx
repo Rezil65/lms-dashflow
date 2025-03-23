@@ -26,7 +26,7 @@ const CourseDetails = () => {
   React.useEffect(() => {
     if (courseId) {
       const allCourses = getCourses();
-      const foundCourse = allCourses.find(c => c.id === courseId);
+      const foundCourse = allCourses.find(c => c.id === parseInt(courseId));
       
       if (foundCourse) {
         setCourse(foundCourse);
