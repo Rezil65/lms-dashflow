@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { BookOpen, LayoutDashboard, LogOut, Graduation, Settings, User } from "lucide-react";
+import { BookOpen, LayoutDashboard, LogOut, GraduationCap, Settings, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 
