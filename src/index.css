@@ -16,8 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* Brand colors updated to match logo */
-    --primary: 349 83% 61%; /* Pink/Red */
+    --primary: 221.2 83.2% 53.9%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -36,7 +35,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.9%;
 
-    --radius: 0.8rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -58,7 +57,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 349 83% 61%; /* Pink/Red */
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -105,28 +104,6 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-muted-foreground/50;
   }
-  
-  /* Page transitions */
-  .page-enter {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  
-  .page-enter-active {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 300ms, transform 300ms;
-  }
-  
-  .page-exit {
-    opacity: 1;
-  }
-  
-  .page-exit-active {
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: opacity 300ms, transform 300ms;
-  }
 }
 
 @layer components {
@@ -143,36 +120,10 @@
   }
   
   .course-card {
-    @apply bg-white/90 backdrop-blur-sm rounded-xl border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px];
+    @apply bg-white rounded-xl border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px];
   }
   
   .stat-card {
-    @apply flex flex-col gap-1 p-4 rounded-xl border border-border bg-white/90 backdrop-blur-sm transition-all duration-300 hover:shadow-sm;
-  }
-  
-  /* Brand element styles */
-  .brand-yellow-element {
-    @apply bg-lms-yellow text-lms-dark-blue font-medium;
-  }
-  
-  .brand-red-element {
-    @apply bg-lms-red text-white font-medium;
-  }
-  
-  .brand-blue-element {
-    @apply bg-lms-blue text-white font-medium;
-  }
-  
-  /* Glass card variants */
-  .glass-card-yellow {
-    @apply bg-lms-yellow/10 backdrop-blur-md border border-lms-yellow/20 shadow-sm;
-  }
-  
-  .glass-card-red {
-    @apply bg-lms-red/10 backdrop-blur-md border border-lms-red/20 shadow-sm;
-  }
-  
-  .glass-card-blue {
-    @apply bg-lms-blue/10 backdrop-blur-md border border-lms-blue/20 shadow-sm;
+    @apply flex flex-col gap-1 p-4 rounded-xl border border-border bg-white transition-all duration-300 hover:shadow-sm;
   }
 }

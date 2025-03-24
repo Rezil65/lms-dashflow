@@ -64,13 +64,14 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				lms: {
-					// Updated colors to match the logo
-					yellow: '#FFBC00', // Bright yellow from logo
-					red: '#F72C70',    // Pink/red from logo
-					blue: '#2BA8FA',   // Blue from logo
-					'dark-blue': '#03045E',
+					blue: '#4361EE',
+					purple: '#7209B7',
+					pink: '#F72585',
+					indigo: '#3A0CA3',
+					teal: '#4CC9F0',
 					'light-blue': '#4CC9F0',
 					'light-gray': '#F8F9FA',
+					'dark-blue': '#03045E'
 				}
 			},
 			borderRadius: {
@@ -135,26 +136,6 @@ export default {
 						opacity: '1'
 					}
 				},
-				'slide-in-right': {
-					'0%': {
-						transform: 'translateX(100%)',
-						opacity: '0'
-					},
-					'100%': {
-						transform: 'translateX(0)',
-						opacity: '1'
-					}
-				},
-				'slide-up': {
-					'0%': {
-						transform: 'translateY(20px)',
-						opacity: '0'
-					},
-					'100%': {
-						transform: 'translateY(0)',
-						opacity: '1'
-					}
-				},
 				'progress-fill': {
 					'0%': { width: '0%' },
 					'100%': { width: 'var(--progress-width)' }
@@ -167,8 +148,6 @@ export default {
 				'fade-in-fast': 'fade-in 0.2s ease-out',
 				'scale-in': 'scale-in 0.3s ease-out',
 				'slide-in': 'slide-in 0.4s ease-out',
-				'slide-in-right': 'slide-in-right 0.4s ease-out',
-				'slide-up': 'slide-up 0.3s ease-out',
 				'progress-fill': 'progress-fill 1.5s ease-out forwards'
 			},
 			fontFamily: {
@@ -177,9 +156,9 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-				'course-gradient-1': 'linear-gradient(135deg, #2BA8FA 0%, #4361EE 100%)',
-				'course-gradient-2': 'linear-gradient(135deg, #F72C70 0%, #FFBC00 100%)',
-				'course-gradient-3': 'linear-gradient(135deg, #FFBC00 0%, #F72C70 100%)'
+				'course-gradient-1': 'linear-gradient(135deg, #4CC9F0 0%, #4361EE 100%)',
+				'course-gradient-2': 'linear-gradient(135deg, #7209B7 0%, #F72585 100%)',
+				'course-gradient-3': 'linear-gradient(135deg, #3A0CA3 0%, #4361EE 100%)'
 			}
 		}
 	},
