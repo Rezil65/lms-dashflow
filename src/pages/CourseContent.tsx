@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Upload, Video, FileText } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -21,7 +22,7 @@ import NotesManager from "@/components/NotesManager";
 
 const defaultModules: Module[] = [
   {
-    id: 1,
+    id: "1",
     title: "Module 1: Introduction to the Course",
     description: "An overview of what you'll learn and how to use this platform.",
     lessons: [
@@ -42,7 +43,7 @@ const defaultModules: Module[] = [
     ]
   },
   {
-    id: 2,
+    id: "2",
     title: "Module 2: Core Concepts",
     description: "Master the fundamental ideas that will form the foundation of your learning.",
     lessons: [
@@ -71,15 +72,15 @@ const CourseContent = () => {
   const [resources, setResources] = useState<Resource[]>([]);
   const [modules, setModules] = useState<Module[]>([]);
   const [editingCourseInfo, setEditingCourseInfo] = useState(false);
-  const [editingModuleId, setEditingModuleId] = useState<number | null>(null);
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const { hasRole } = useAuth();
   
-  const courseId = parseInt(id || "0");
+  const courseId = id || "0";
   const canEdit = hasRole(["admin", "instructor"]);
   const isLearner = hasRole(["learner"]);
   
   useEffect(() => {
-    const courseData = getCourse(courseId);
+    const courseData = getCourse(parseInt(courseId));
     setCourseTitle(courseData?.title || "");
     setCourseDescription(courseData?.description || "");
     
@@ -106,7 +107,7 @@ const CourseContent = () => {
   
   const handleAddModule = () => {
     const newModule: Module = {
-      id: Date.now(),
+      id: Date.now().toString(),
       title: `Module ${modules.length + 1}`,
       description: "Enter module description",
       lessons: []
@@ -150,16 +151,16 @@ const CourseContent = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="border-b bg-white dark:bg-gray-800 dark:border-gray-700">
+      <div className="border-b bg-white">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
             <Link to={`/course/${id}`} className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="text-lg font-semibold neon-text-primary">Course Content</h1>
+            <h1 className="text-lg font-semibold">Course Content</h1>
           </div>
         </div>
       </div>
@@ -167,7 +168,7 @@ const CourseContent = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-border dark:border-gray-700 overflow-hidden mb-6 card-3d neon-border-hover">
+            <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
               {editingCourseInfo ? (
                 <div className="p-6 space-y-4">
                   <div className="space-y-2">
@@ -215,7 +216,7 @@ const CourseContent = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h1 className="text-2xl font-display font-semibold mb-2 neon-text-primary">
+                      <h1 className="text-2xl font-display font-semibold mb-2">
                         {courseTitle || "Blockchain Technology"}
                       </h1>
                       
@@ -240,15 +241,15 @@ const CourseContent = () => {
                   
                   <Tabs defaultValue="content" className="w-full">
                     <TabsList className="mb-4">
-                      <TabsTrigger value="content" className="data-[state=active]:neon-text-primary">Course Content</TabsTrigger>
-                      {canEdit && <TabsTrigger value="resources" className="data-[state=active]:neon-text-primary">Resources</TabsTrigger>}
-                      <TabsTrigger value="notes" className="data-[state=active]:neon-text-primary">My Notes</TabsTrigger>
+                      <TabsTrigger value="content">Course Content</TabsTrigger>
+                      {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
+                      <TabsTrigger value="notes">My Notes</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="content" className="space-y-4">
                       {canEdit && (
                         <div className="mb-4">
-                          <Button onClick={handleAddModule} className="glow-effect">
+                          <Button onClick={handleAddModule}>
                             <Plus className="h-4 w-4 mr-2" />
                             Add Module
                           </Button>
@@ -259,9 +260,9 @@ const CourseContent = () => {
                         editingModuleId === module.id ? (
                           <ModuleEditor 
                             key={module.id}
-                            module={module}
+                            initialModule={module}
                             onSave={handleSaveModule}
-                            onCancel={() => setEditingModuleId(null)}
+                            courseId={courseId}
                           />
                         ) : (
                           <ModuleDisplay 
@@ -279,7 +280,7 @@ const CourseContent = () => {
                           <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-medium">Course Resources</h3>
                             <ResourceUploader 
-                              courseId={courseId} 
+                              courseId={parseInt(courseId)} 
                               onResourceAdded={handleResourceAdded} 
                             />
                           </div>
@@ -322,7 +323,7 @@ const CourseContent = () => {
                     )}
 
                     <TabsContent value="notes">
-                      <NotesManager courseId={courseId} />
+                      <NotesManager courseId={parseInt(courseId)} />
                     </TabsContent>
                   </Tabs>
                 </div>
@@ -331,9 +332,9 @@ const CourseContent = () => {
           </div>
           
           <div>
-            <Card className="sticky top-4 card-3d neon-border-hover">
+            <Card className="sticky top-4">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4 neon-text-primary">Your Progress</h2>
+                <h2 className="text-lg font-semibold mb-4">Your Progress</h2>
                 <div className="mb-6">
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Course Completion</span>
@@ -345,9 +346,9 @@ const CourseContent = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-sm font-medium mb-2">Continue Learning</h3>
-                    <div className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full p-1">
+                        <div className="bg-blue-100 text-blue-600 rounded-full p-1">
                           <Video className="h-4 w-4" />
                         </div>
                         <span className="font-medium">Advanced Techniques</span>
@@ -360,9 +361,9 @@ const CourseContent = () => {
                   
                   <div>
                     <h3 className="text-sm font-medium mb-2">Next Up</h3>
-                    <div className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+                    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full p-1">
+                        <div className="bg-gray-100 text-gray-600 rounded-full p-1">
                           <FileText className="h-4 w-4" />
                         </div>
                         <span className="font-medium">Project Documentation</span>
@@ -373,7 +374,7 @@ const CourseContent = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full glow-effect">Resume Course</Button>
+                  <Button className="w-full">Resume Course</Button>
                 </div>
               </CardContent>
             </Card>

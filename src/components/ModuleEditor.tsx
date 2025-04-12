@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Trash2, MoveUp, MoveDown, FileText, Video, FileImage, File, RefreshCw, Link as LinkIcon } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ContentEmbedder } from "./ContentEmbedder";
+import ContentEmbedder, { EmbedData } from "@/components/ContentEmbedder";
 import { useToast } from "@/hooks/use-toast";
 import QuizManager, { Quiz } from "./QuizManager";
 
