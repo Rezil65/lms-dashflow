@@ -10,8 +10,8 @@
 /* Custom styles for responsive design */
 @media (max-width: 640px) {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 
@@ -31,9 +31,100 @@
   }
 }
 
+/* Animation for tab transitions */
+.tab-transition {
+  animation: tabFade 0.3s ease-out;
+}
+
+@keyframes tabFade {
+  from { 
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive card grid */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
+}
+
+/* Quiz animations */
+.quiz-option-hover {
+  transition: all 0.2s ease;
+}
+
+.quiz-option-hover:hover {
+  transform: translateX(5px);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Course feed interactions */
+.feed-post {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feed-post:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive profile menu transitions */
+.profile-menu-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.profile-menu-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+.profile-menu-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.profile-menu-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+/* Add some polish to quiz components */
+.quiz-correct {
+  background-color: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.quiz-incorrect {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Better loading states */
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.09) 37%,
+    rgba(0, 0, 0, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: loading 1.4s ease infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
 }

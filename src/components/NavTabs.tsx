@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ChartBar, Compass, GraduationCap, LayoutDashboard } from "lucide-react";
+import { ChartBar, Compass, GraduationCap, LayoutDashboard, BookOpen } from "lucide-react";
 
 interface NavTabsProps {
   activeTab: string;
@@ -12,7 +12,7 @@ const NavTabs = ({ activeTab, onTabChange }: NavTabsProps) => {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "courses", label: "Courses", icon: Compass },
     { id: "my-learnings", label: "My Learnings", icon: GraduationCap },
-    { id: "learning-paths", label: "Learning Paths", icon: ChartBar },
+    { id: "learning-paths", label: "Course Feeds", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: ChartBar },
   ];
   

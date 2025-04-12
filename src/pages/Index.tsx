@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "@/components/Header";
@@ -5,7 +6,7 @@ import NavTabs from "@/components/NavTabs";
 import Stats from "@/components/Stats";
 import CourseProgress from "@/components/CourseProgress";
 import AssignedCourses from "@/components/AssignedCourses";
-import LearningPaths from "@/components/LearningPaths";
+import CourseFeeds from "@/components/CourseFeeds";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 
@@ -68,7 +69,7 @@ const Index = () => {
         </div>
         
         <div>
-          <LearningPaths />
+          <CourseFeeds />
         </div>
       </main>
     </div>

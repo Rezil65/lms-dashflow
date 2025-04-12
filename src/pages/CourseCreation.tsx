@@ -29,6 +29,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveCourse } from "@/utils/courseStorage";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import QuizManager, { Quiz } from "@/components/QuizManager";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -53,6 +55,8 @@ const CourseCreation = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("basic");
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -94,6 +98,10 @@ const CourseCreation = () => {
     setTags(newTags);
     form.setValue("tags", newTags);
   };
+  
+  const handleSaveQuizzes = (updatedQuizzes: Quiz[]) => {
+    setQuizzes(updatedQuizzes);
+  };
 
   const onSubmit = async (data: FormValues) => {
     try {
@@ -111,6 +119,7 @@ const CourseCreation = () => {
         isFeatured: data.isFeatured,
         tags: data.tags,
         thumbnail: thumbnailPreview || undefined,
+        quizzes: quizzes
       });
       
       // Dispatch a custom event to notify other components
@@ -155,297 +164,390 @@ const CourseCreation = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-6">
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Course Title</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter course title" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Make it clear and catchy
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Enter course description" 
-                                className="min-h-32"
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Describe what students will learn
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="category"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Category</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a category" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="programming">Programming</SelectItem>
-                                  <SelectItem value="design">Design</SelectItem>
-                                  <SelectItem value="business">Business</SelectItem>
-                                  <SelectItem value="marketing">Marketing</SelectItem>
-                                  <SelectItem value="photography">Photography</SelectItem>
-                                  <SelectItem value="music">Music</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="level"
-                          render={({ field }) => (
-                            <FormItem className="space-y-3">
-                              <FormLabel>Difficulty Level</FormLabel>
-                              <FormControl>
-                                <RadioGroup
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                  className="flex flex-col space-y-1"
-                                >
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="beginner" id="beginner" />
-                                    <label htmlFor="beginner" className="text-sm">Beginner</label>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="intermediate" id="intermediate" />
-                                    <label htmlFor="intermediate" className="text-sm">Intermediate</label>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="advanced" id="advanced" />
-                                    <label htmlFor="advanced" className="text-sm">Advanced</label>
-                                  </div>
-                                </RadioGroup>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={form.control}
-                          name="price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Price ($)</FormLabel>
-                              <FormControl>
-                                <Input type="number" min="0" step="0.01" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Set to 0 for a free course
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="duration"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Duration (hours)</FormLabel>
-                              <FormControl>
-                                <Input type="number" min="1" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                Estimated completion time
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="isFeatured"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Featured Course</FormLabel>
-                              <FormDescription>
-                                This course will be displayed prominently on the home page
-                              </FormDescription>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div>
-                        <FormLabel>Tags</FormLabel>
-                        <div className="flex items-center mt-2">
-                          <Input
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            placeholder="Add a tag"
-                            className="mr-2"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                addTag();
-                              }
-                            }}
-                          />
-                          <Button type="button" onClick={addTag} size="sm">
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {tags.map((tag) => (
-                            <div
-                              key={tag}
-                              className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"
-                            >
-                              {tag}
-                              <button
-                                type="button"
-                                onClick={() => removeTag(tag)}
-                                className="text-secondary-foreground/70 hover:text-secondary-foreground"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
-                    size="lg"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Creating..." : "Create Course"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="basic">Basic Info</TabsTrigger>
+            <TabsTrigger value="details">Course Details</TabsTrigger>
+            <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+          </TabsList>
           
-          <div>
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-lg font-semibold mb-4">Course Thumbnail</h3>
-                <div 
-                  className={`border-2 border-dashed rounded-lg p-4 text-center ${
-                    thumbnailPreview ? 'border-primary' : 'border-border'
-                  }`}
-                >
-                  {thumbnailPreview ? (
-                    <div className="relative">
-                      <img 
-                        src={thumbnailPreview} 
-                        alt="Thumbnail preview" 
-                        className="w-full h-40 object-cover rounded-md"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => {
-                          setThumbnailPreview(null);
-                          form.setValue("thumbnail", undefined);
-                        }}
+          <TabsContent value="basic">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-6">
+                          <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Course Title</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter course title" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  Make it clear and catchy
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    placeholder="Enter course description" 
+                                    className="min-h-32"
+                                    {...field} 
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Describe what students will learn
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                              control={form.control}
+                              name="category"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Category</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a category" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="programming">Programming</SelectItem>
+                                      <SelectItem value="design">Design</SelectItem>
+                                      <SelectItem value="business">Business</SelectItem>
+                                      <SelectItem value="marketing">Marketing</SelectItem>
+                                      <SelectItem value="photography">Photography</SelectItem>
+                                      <SelectItem value="music">Music</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
+                              name="level"
+                              render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                  <FormLabel>Difficulty Level</FormLabel>
+                                  <FormControl>
+                                    <RadioGroup
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                      className="flex flex-col space-y-1"
+                                    >
+                                      <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="beginner" id="beginner" />
+                                        <label htmlFor="beginner" className="text-sm">Beginner</label>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="intermediate" id="intermediate" />
+                                        <label htmlFor="intermediate" className="text-sm">Intermediate</label>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="advanced" id="advanced" />
+                                        <label htmlFor="advanced" className="text-sm">Advanced</label>
+                                      </div>
+                                    </RadioGroup>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                              control={form.control}
+                              name="price"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Price ($)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" min="0" step="0.01" {...field} />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Set to 0 for a free course
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
+                              name="duration"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Duration (hours)</FormLabel>
+                                  <FormControl>
+                                    <Input type="number" min="1" {...field} />
+                                  </FormControl>
+                                  <FormDescription>
+                                    Estimated completion time
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <FormField
+                            control={form.control}
+                            name="isFeatured"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel>Featured Course</FormLabel>
+                                  <FormDescription>
+                                    This course will be displayed prominently on the home page
+                                  </FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <div>
+                            <FormLabel>Tags</FormLabel>
+                            <div className="flex items-center mt-2">
+                              <Input
+                                value={tagInput}
+                                onChange={(e) => setTagInput(e.target.value)}
+                                placeholder="Add a tag"
+                                className="mr-2"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    addTag();
+                                  }
+                                }}
+                              />
+                              <Button type="button" onClick={addTag} size="sm">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {tags.map((tag) => (
+                                <div
+                                  key={tag}
+                                  className="flex items-center gap-1 bg-secondary text-secondary-foreground px-3 py-1 rounded-full text-sm"
+                                >
+                                  {tag}
+                                  <button
+                                    type="button"
+                                    onClick={() => removeTag(tag)}
+                                    className="text-secondary-foreground/70 hover:text-secondary-foreground"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="flex justify-between">
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => setActiveTab("quizzes")}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Skip to Quizzes
+                      </Button>
+                      <Button 
+                        type="button"  
+                        onClick={() => setActiveTab("details")}
+                      >
+                        Continue
                       </Button>
                     </div>
-                  ) : (
-                    <label className="cursor-pointer block">
-                      <div className="flex flex-col items-center justify-center py-4">
-                        <UploadCloud className="h-10 w-10 text-muted-foreground mb-2" />
-                        <p className="text-sm font-medium">Click to upload</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          SVG, PNG, JPG or GIF (max. 2MB)
-                        </p>
-                      </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                  )}
-                </div>
-                <div className="mt-6 space-y-4">
-                  <h3 className="text-lg font-semibold">Course Preview</h3>
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium">
-                      {form.watch("title") || "Course Title"}
-                    </h4>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {form.watch("description") || "Course description preview will appear here..."}
-                    </p>
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-sm font-medium">
-                        ${form.watch("price") || "0"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {form.watch("duration") || "0"} hours
-                      </span>
+                  </form>
+                </Form>
+              </div>
+              
+              <div>
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Course Thumbnail</h3>
+                    <div 
+                      className={`border-2 border-dashed rounded-lg p-4 text-center ${
+                        thumbnailPreview ? 'border-primary' : 'border-border'
+                      }`}
+                    >
+                      {thumbnailPreview ? (
+                        <div className="relative">
+                          <img 
+                            src={thumbnailPreview} 
+                            alt="Thumbnail preview" 
+                            className="w-full h-40 object-cover rounded-md"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={() => {
+                              setThumbnailPreview(null);
+                              form.setValue("thumbnail", undefined);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer block">
+                          <div className="flex flex-col items-center justify-center py-4">
+                            <UploadCloud className="h-10 w-10 text-muted-foreground mb-2" />
+                            <p className="text-sm font-medium">Click to upload</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              SVG, PNG, JPG or GIF (max. 2MB)
+                            </p>
+                          </div>
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*"
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                      )}
                     </div>
+                    <div className="mt-6 space-y-4">
+                      <h3 className="text-lg font-semibold">Course Preview</h3>
+                      <div className="border rounded-lg p-4">
+                        <h4 className="font-medium">
+                          {form.watch("title") || "Course Title"}
+                        </h4>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {form.watch("description") || "Course description preview will appear here..."}
+                        </p>
+                        <div className="flex items-center justify-between mt-4">
+                          <span className="text-sm font-medium">
+                            ${form.watch("price") || "0"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {form.watch("duration") || "0"} hours
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="details">
+            <div className="space-y-6">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Course Details</h3>
+                <p className="text-muted-foreground mb-6">
+                  Add more details about your course like objectives, prerequisites, and target audience.
+                </p>
+                
+                <div className="space-y-6">
+                  <div>
+                    <Label htmlFor="prerequisites">Prerequisites</Label>
+                    <Textarea 
+                      id="prerequisites"
+                      placeholder="What should students know before taking this course?"
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="objectives">Course Objectives</Label>
+                    <Textarea 
+                      id="objectives"
+                      placeholder="What will students learn from this course?"
+                      className="mt-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="audience">Target Audience</Label>
+                    <Textarea 
+                      id="audience"
+                      placeholder="Who is this course for?"
+                      className="mt-2"
+                    />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </Card>
+              
+              <div className="flex justify-between">
+                <Button 
+                  variant="outline"
+                  onClick={() => setActiveTab("basic")}
+                >
+                  Back to Basic Info
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab("quizzes")}
+                >
+                  Continue to Quizzes
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="quizzes">
+            <QuizManager 
+              courseId="new-course" 
+              onSaveQuizzes={handleSaveQuizzes} 
+              initialQuizzes={quizzes}
+            />
+            
+            <div className="flex justify-between mt-8">
+              <Button 
+                variant="outline"
+                onClick={() => setActiveTab("details")}
+              >
+                Back to Details
+              </Button>
+              <Button 
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Creating..." : "Create Course"}
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

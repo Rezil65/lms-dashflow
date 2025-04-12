@@ -5,15 +5,13 @@ import Header from "@/components/Header";
 import NavTabs from "@/components/NavTabs";
 import Stats from "@/components/Stats";
 import CourseProgress from "@/components/CourseProgress";
-import AssignedCourses from "@/components/AssignedCourses";
-import LearningPaths from "@/components/LearningPaths";
 import CoursesTab from "@/components/CoursesTab";
 import MyLearningsTab from "@/components/MyLearningsTab";
-import LearningPathsTab from "@/components/LearningPathsTab";
 import AnalyticsTab from "@/components/AnalyticsTab";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import CourseFeeds from "@/components/CourseFeeds";
 
 const LearnerDashboard = () => {
   const navigate = useNavigate();
@@ -76,19 +74,19 @@ const LearnerDashboard = () => {
               </Card>
               
               <Card className="p-6 col-span-2">
-                <AssignedCourses />
+                <CoursesTab isPreview={true} />
               </Card>
             </div>
             
             <div>
-              <LearningPaths />
+              <CourseFeeds />
             </div>
           </>
         )}
         
         {activeTab === "courses" && <CoursesTab />}
         {activeTab === "my-learnings" && <MyLearningsTab />}
-        {activeTab === "learning-paths" && <LearningPathsTab />}
+        {activeTab === "learning-paths" && <CourseFeeds />}
         {activeTab === "analytics" && <AnalyticsTab />}
       </main>
     </div>
