@@ -128,3 +128,88 @@
     background-position: 0 50%;
   }
 }
+
+/* Neon gradients */
+.neon-gradient-blue {
+  background: linear-gradient(135deg, #4361EE 0%, #4CC9F0 100%);
+  box-shadow: 0 4px 15px rgba(76, 201, 240, 0.3);
+}
+
+.neon-gradient-purple {
+  background: linear-gradient(135deg, #7209B7 0%, #F72585 100%);
+  box-shadow: 0 4px 15px rgba(247, 37, 133, 0.3);
+}
+
+.neon-gradient-green {
+  background: linear-gradient(135deg, #06D6A0 0%, #1B998B 100%);
+  box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
+}
+
+/* 3D Effects */
+.card-3d-wrapper {
+  perspective: 2000px;
+}
+
+.card-3d {
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.card-3d:hover {
+  transform: translateY(-5px) rotateX(5deg);
+}
+
+/* Dark mode toggle animation */
+.theme-toggle-switch {
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-switch:hover {
+  transform: scale(1.1);
+}
+
+/* Fullscreen content */
+.fullscreen-content {
+  z-index: 50;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.fullscreen-content iframe,
+.fullscreen-content video,
+.fullscreen-content img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+/* Glowing effect for buttons */
+.glow-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-effect::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.glow-effect:hover::after {
+  opacity: 1;
+}

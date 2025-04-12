@@ -45,6 +45,11 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Neon effects */
+    --neon-primary: 217.2 91.2% 59.8%;
+    --neon-secondary: 280 100% 60%;
+    --neon-accent: 330 100% 60%;
   }
 
   .dark {
@@ -75,6 +80,11 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    
+    /* Neon effects */
+    --neon-primary: 217.2 91.2% 59.8%;
+    --neon-secondary: 280 100% 60%;
+    --neon-accent: 330 100% 60%;
   }
 }
 
@@ -119,11 +129,59 @@
     @apply h-full rounded-full animate-progress-fill;
   }
   
+  /* Neon gradient cards */
   .course-card {
-    @apply bg-white rounded-xl border border-border p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px];
+    @apply bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 shadow-lg 
+           transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:translate-y-[-4px] 
+           hover:border-primary/30;
   }
   
   .stat-card {
-    @apply flex flex-col gap-1 p-4 rounded-xl border border-border bg-white transition-all duration-300 hover:shadow-sm;
+    @apply flex flex-col gap-1 p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm
+           transition-all duration-300 hover:shadow-md hover:shadow-primary/20 hover:border-primary/20;
+  }
+  
+  /* Neon text and border effects */
+  .neon-text-primary {
+    @apply text-primary drop-shadow-[0_0_6px_rgba(59,130,246,0.6)];
+  }
+  
+  .neon-text-secondary {
+    @apply text-purple-500 drop-shadow-[0_0_6px_rgba(168,85,247,0.6)];
+  }
+  
+  .neon-text-accent {
+    @apply text-pink-500 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)];
+  }
+  
+  .neon-border {
+    @apply border border-primary/50 shadow-[0_0_10px_rgba(59,130,246,0.3)];
+  }
+  
+  .neon-border-hover:hover {
+    @apply border-primary/70 shadow-[0_0_15px_rgba(59,130,246,0.5)];
+  }
+  
+  /* 3D card effects */
+  .card-3d {
+    @apply transition-all duration-300 transform perspective-[1000px];
+  }
+  
+  .card-3d:hover {
+    @apply transform-gpu rotate-y-1 rotate-x-1;
+  }
+
+  /* Fullscreen toggle */
+  .fullscreen-toggle {
+    @apply absolute top-2 right-2 p-1.5 rounded-full bg-black/30 text-white z-10 
+           hover:bg-black/50 transition-colors;
+  }
+  
+  .fullscreen-container {
+    @apply relative;
+  }
+  
+  .fullscreen-active {
+    @apply fixed inset-0 w-full h-full z-50 bg-black flex items-center justify-center p-4;
   }
 }

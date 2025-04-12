@@ -17,6 +17,7 @@ import ModuleEditor, { Module } from "@/components/ModuleEditor";
 import ModuleDisplay from "@/components/ModuleDisplay";
 import ContentEmbedder, { EmbedData } from "@/components/ContentEmbedder";
 import { Card, CardContent } from "@/components/ui/card";
+import NotesManager from "@/components/NotesManager";
 
 const defaultModules: Module[] = [
   {
@@ -78,30 +79,24 @@ const CourseContent = () => {
   const isLearner = hasRole(["learner"]);
   
   useEffect(() => {
-    // Get course data
     const courseData = getCourse(courseId);
     setCourseTitle(courseData?.title || "");
     setCourseDescription(courseData?.description || "");
     
-    // Get resources
     const storageKey = `course-${courseId}-resources`;
     const savedResources = JSON.parse(localStorage.getItem(storageKey) || "[]");
     setResources(savedResources);
     
-    // Get modules
     const modulesKey = `course-${courseId}-modules`;
     const savedModules = JSON.parse(localStorage.getItem(modulesKey) || "null");
     if (savedModules) {
       setModules(savedModules);
     } else {
-      // Use default modules if none exist
       setModules(defaultModules);
     }
   }, [courseId]);
   
   const handleUpdateCourseInfo = () => {
-    // In a real app, this would save to a backend
-    // For now, just update local state and show toast
     setEditingCourseInfo(false);
     toast({
       title: "Course Updated",
@@ -129,7 +124,6 @@ const CourseContent = () => {
     setModules(updatedModules);
     setEditingModuleId(null);
     
-    // Save to localStorage
     const modulesKey = `course-${courseId}-modules`;
     localStorage.setItem(modulesKey, JSON.stringify(updatedModules));
     
@@ -143,14 +137,11 @@ const CourseContent = () => {
     const updatedResources = [...resources, newResource];
     setResources(updatedResources);
     
-    // Save to localStorage
     const storageKey = `course-${courseId}-resources`;
     localStorage.setItem(storageKey, JSON.stringify(updatedResources));
   };
   
   const handleEmbedContent = (embedData: EmbedData) => {
-    // Add embedded content to course overview
-    // In a real app, this would add HTML to the course description
     console.log("Embedding content:", embedData);
     toast({
       title: "Content Embedded",
@@ -159,16 +150,16 @@ const CourseContent = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
       
-      <div className="border-b bg-white">
+      <div className="border-b bg-white dark:bg-gray-800 dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
             <Link to={`/course/${id}`} className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <h1 className="text-lg font-semibold">Course Content</h1>
+            <h1 className="text-lg font-semibold neon-text-primary">Course Content</h1>
           </div>
         </div>
       </div>
@@ -176,7 +167,7 @@ const CourseContent = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-border dark:border-gray-700 overflow-hidden mb-6 card-3d neon-border-hover">
               {editingCourseInfo ? (
                 <div className="p-6 space-y-4">
                   <div className="space-y-2">
@@ -224,7 +215,7 @@ const CourseContent = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h1 className="text-2xl font-display font-semibold mb-2">
+                      <h1 className="text-2xl font-display font-semibold mb-2 neon-text-primary">
                         {courseTitle || "Blockchain Technology"}
                       </h1>
                       
@@ -249,15 +240,15 @@ const CourseContent = () => {
                   
                   <Tabs defaultValue="content" className="w-full">
                     <TabsList className="mb-4">
-                      <TabsTrigger value="content">Course Content</TabsTrigger>
-                      {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
-                      <TabsTrigger value="notes">My Notes</TabsTrigger>
+                      <TabsTrigger value="content" className="data-[state=active]:neon-text-primary">Course Content</TabsTrigger>
+                      {canEdit && <TabsTrigger value="resources" className="data-[state=active]:neon-text-primary">Resources</TabsTrigger>}
+                      <TabsTrigger value="notes" className="data-[state=active]:neon-text-primary">My Notes</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="content" className="space-y-4">
                       {canEdit && (
                         <div className="mb-4">
-                          <Button onClick={handleAddModule}>
+                          <Button onClick={handleAddModule} className="glow-effect">
                             <Plus className="h-4 w-4 mr-2" />
                             Add Module
                           </Button>
@@ -331,11 +322,7 @@ const CourseContent = () => {
                     )}
 
                     <TabsContent value="notes">
-                      <div className="border rounded-lg p-6 text-center">
-                        <h3 className="text-lg font-medium mb-2">My Notes</h3>
-                        <p className="text-muted-foreground mb-4">You haven't created any notes for this course yet.</p>
-                        <Button variant="outline">Create Note</Button>
-                      </div>
+                      <NotesManager courseId={courseId} />
                     </TabsContent>
                   </Tabs>
                 </div>
@@ -344,9 +331,9 @@ const CourseContent = () => {
           </div>
           
           <div>
-            <Card className="sticky top-4">
+            <Card className="sticky top-4 card-3d neon-border-hover">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Your Progress</h2>
+                <h2 className="text-lg font-semibold mb-4 neon-text-primary">Your Progress</h2>
                 <div className="mb-6">
                   <div className="flex justify-between mb-2">
                     <span className="text-sm text-muted-foreground">Course Completion</span>
@@ -358,9 +345,9 @@ const CourseContent = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-sm font-medium mb-2">Continue Learning</h3>
-                    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-blue-100 text-blue-600 rounded-full p-1">
+                        <div className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-full p-1">
                           <Video className="h-4 w-4" />
                         </div>
                         <span className="font-medium">Advanced Techniques</span>
@@ -373,9 +360,9 @@ const CourseContent = () => {
                   
                   <div>
                     <h3 className="text-sm font-medium mb-2">Next Up</h3>
-                    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-gray-100 text-gray-600 rounded-full p-1">
+                        <div className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full p-1">
                           <FileText className="h-4 w-4" />
                         </div>
                         <span className="font-medium">Project Documentation</span>
@@ -386,7 +373,7 @@ const CourseContent = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full">Resume Course</Button>
+                  <Button className="w-full glow-effect">Resume Course</Button>
                 </div>
               </CardContent>
             </Card>

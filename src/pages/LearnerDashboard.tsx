@@ -12,12 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import CourseFeeds from "@/components/CourseFeeds";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 
 const LearnerDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { theme, setTheme } = useTheme();
   
   // Parse tab from URL query parameters
   useEffect(() => {
@@ -48,8 +51,12 @@ const LearnerDashboard = () => {
     navigate('/login');
   };
   
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
       <Header />
       <NavTabs activeTab={activeTab} onTabChange={handleTabChange} />
       
@@ -58,10 +65,21 @@ const LearnerDashboard = () => {
           <>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-xl font-semibold">Learner Dashboard</h1>
+                <h1 className="text-xl font-semibold neon-text-primary">Learner Dashboard</h1>
                 <p className="text-muted-foreground">Welcome back, {user?.name || user?.email}!</p>
               </div>
-              <Button variant="outline" onClick={handleLogout}>Logout</Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="theme-toggle-switch"
+                  aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                >
+                  {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
+                <Button variant="outline" onClick={handleLogout}>Logout</Button>
+              </div>
             </div>
             
             <div className="mb-8">
@@ -69,17 +87,17 @@ const LearnerDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <Card className="p-6 col-span-1">
+              <Card className="p-6 col-span-1 card-3d neon-border-hover">
                 <CourseProgress />
               </Card>
               
-              <Card className="p-6 col-span-2">
+              <Card className="p-6 col-span-2 card-3d neon-border-hover">
                 <CoursesTab isPreview={true} />
               </Card>
             </div>
             
             <div>
-              <CourseFeeds />
+              <CourseFeeds isPreview={true} />
             </div>
           </>
         )}
