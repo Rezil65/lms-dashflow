@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,16 +15,10 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Trash2, MoveUp, MoveDown, FileText, Video, FileImage, File, RefreshCw, Link as LinkIcon } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import ContentEmbedder, { EmbedData } from "@/components/ContentEmbedder";
+import { EmbedData } from "@/components/ContentEmbedder";
+import ContentEmbedder from "@/components/ContentEmbedder";
 import { useToast } from "@/hooks/use-toast";
 import QuizManager, { Quiz } from "./QuizManager";
-
-export interface EmbedData {
-  url: string;
-  width?: string;
-  height?: string;
-  title?: string;
-}
 
 export interface Lesson {
   id: string;
@@ -66,8 +59,6 @@ const ModuleEditor = ({ initialModule, onSave, courseId }: ModuleEditorProps) =>
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch available quizzes for this course
-    // This is a mock, in a real app you'd fetch from API
     const mockQuizzes: Quiz[] = [
       {
         id: "quiz1",
@@ -381,7 +372,6 @@ const ModuleEditor = ({ initialModule, onSave, courseId }: ModuleEditorProps) =>
         <Button onClick={handleSaveModule}>Save Module</Button>
       </div>
 
-      {/* Add/Edit Lesson Dialog */}
       <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -456,9 +446,7 @@ const ModuleEditor = ({ initialModule, onSave, courseId }: ModuleEditorProps) =>
                 
                 {currentLesson.type !== 'text' && (
                   <ContentEmbedder
-                    contentType={currentLesson.type}
-                    initialEmbedData={currentLesson.embedData}
-                    onEmbedDataChange={(embedData) => 
+                    onEmbed={(embedData) => 
                       setCurrentLesson({...currentLesson, embedData})
                     }
                   />
@@ -474,7 +462,6 @@ const ModuleEditor = ({ initialModule, onSave, courseId }: ModuleEditorProps) =>
         </DialogContent>
       </Dialog>
 
-      {/* Quizzes Management Dialog */}
       <Dialog open={quizDialogOpen} onOpenChange={setQuizDialogOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
