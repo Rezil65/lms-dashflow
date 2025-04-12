@@ -17,10 +17,11 @@ export interface EmbedData {
 
 export interface ContentEmbedderProps {
   initialEmbedData?: EmbedData;
-  onEmbedDataChange: (embedData: EmbedData) => void;
+  onEmbedDataChange?: (embedData: EmbedData) => void;
+  onEmbed?: (embedData: EmbedData) => void; // Added this prop for compatibility
 }
 
-const ContentEmbedder = ({ initialEmbedData, onEmbedDataChange }: ContentEmbedderProps) => {
+const ContentEmbedder = ({ initialEmbedData, onEmbedDataChange, onEmbed }: ContentEmbedderProps) => {
   const [embedUrl, setEmbedUrl] = useState<string>(initialEmbedData?.url || "");
   const [embedTitle, setEmbedTitle] = useState<string>(initialEmbedData?.title || "");
   const [embedWidth, setEmbedWidth] = useState<string>(initialEmbedData?.width || "100%");
@@ -41,15 +42,38 @@ const ContentEmbedder = ({ initialEmbedData, onEmbedDataChange }: ContentEmbedde
       setIsValid(true);
       setErrorMessage("");
       
-      onEmbedDataChange({
+      const embedData = {
         url: embedUrl,
         title: embedTitle,
         width: embedWidth,
-        height: embedHeight
-      });
+        height: embedHeight,
+        type: determineContentType(embedUrl)
+      };
+      
+      // Call either of the callback props that exists
+      if (onEmbedDataChange) {
+        onEmbedDataChange(embedData);
+      }
+      
+      if (onEmbed) {
+        onEmbed(embedData);
+      }
     } catch (e) {
       setIsValid(false);
       setErrorMessage("Please enter a valid URL");
+    }
+  };
+
+  // Helper function to determine content type based on URL
+  const determineContentType = (url: string): string => {
+    if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) {
+      return 'video';
+    } else if (url.startsWith('data:image/')) {
+      return 'image';
+    } else if (url.startsWith('data:')) {
+      return 'file';
+    } else {
+      return 'iframe';
     }
   };
 
@@ -62,13 +86,23 @@ const ContentEmbedder = ({ initialEmbedData, onEmbedDataChange }: ContentEmbedde
           const url = event.target.result.toString();
           setEmbedUrl(url);
           setEmbedTitle(file.name);
-          onEmbedDataChange({
+          
+          const embedData = {
             url,
             title: file.name,
             width: embedWidth,
             height: embedHeight,
-            type: file.type
-          });
+            type: file.type.startsWith('image/') ? 'image' : 'file'
+          };
+          
+          // Call either of the callback props that exists
+          if (onEmbedDataChange) {
+            onEmbedDataChange(embedData);
+          }
+          
+          if (onEmbed) {
+            onEmbed(embedData);
+          }
         }
       };
       reader.readAsDataURL(file);
