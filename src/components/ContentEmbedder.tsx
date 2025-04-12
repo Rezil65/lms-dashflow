@@ -1,181 +1,174 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Upload, ExternalLink, Video, FileText } from "lucide-react";
-import FileUploader from "@/components/FileUploader";
-
-interface ContentEmbedderProps {
-  onEmbed: (embedData: EmbedData) => void;
-}
-
-export type EmbedType = "iframe" | "video" | "html" | "file";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, Link as LinkIcon, Upload } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export interface EmbedData {
-  type: EmbedType;
   url: string;
-  title: string;
   width?: string;
   height?: string;
-  file?: File;
+  title?: string;
+  type?: string;
 }
 
-const ContentEmbedder = ({ onEmbed }: ContentEmbedderProps) => {
-  const [embedType, setEmbedType] = useState<EmbedType>("iframe");
-  const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
-  const [width, setWidth] = useState("100%");
-  const [height, setHeight] = useState("400px");
-  const [file, setFile] = useState<File | null>(null);
+export interface ContentEmbedderProps {
+  initialEmbedData?: EmbedData;
+  onEmbedDataChange: (embedData: EmbedData) => void;
+}
 
-  const handleFileUploaded = (uploadedFile: File) => {
-    setFile(uploadedFile);
-    setTitle(uploadedFile.name);
-  };
+const ContentEmbedder = ({ initialEmbedData, onEmbedDataChange }: ContentEmbedderProps) => {
+  const [embedUrl, setEmbedUrl] = useState<string>(initialEmbedData?.url || "");
+  const [embedTitle, setEmbedTitle] = useState<string>(initialEmbedData?.title || "");
+  const [embedWidth, setEmbedWidth] = useState<string>(initialEmbedData?.width || "100%");
+  const [embedHeight, setEmbedHeight] = useState<string>(initialEmbedData?.height || "315");
+  const [isValid, setIsValid] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleEmbed = () => {
-    if (!title) {
-      alert("Please enter a title for the embedded content");
+    if (!embedUrl) {
+      setIsValid(false);
+      setErrorMessage("Please enter a valid URL");
       return;
     }
 
-    if (embedType === "file" || embedType === "html") {
-      if (!file) {
-        alert("Please upload a file");
-        return;
-      }
-
-      onEmbed({
-        type: embedType,
-        url: URL.createObjectURL(file),
-        title,
-        width,
-        height,
-        file,
+    try {
+      // Basic URL validation
+      new URL(embedUrl);
+      setIsValid(true);
+      setErrorMessage("");
+      
+      onEmbedDataChange({
+        url: embedUrl,
+        title: embedTitle,
+        width: embedWidth,
+        height: embedHeight
       });
-    } else {
-      if (!url) {
-        alert("Please enter a URL");
-        return;
-      }
+    } catch (e) {
+      setIsValid(false);
+      setErrorMessage("Please enter a valid URL");
+    }
+  };
 
-      onEmbed({
-        type: embedType,
-        url,
-        title,
-        width,
-        height,
-      });
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          const url = event.target.result.toString();
+          setEmbedUrl(url);
+          setEmbedTitle(file.name);
+          onEmbedDataChange({
+            url,
+            title: file.name,
+            width: embedWidth,
+            height: embedHeight,
+            type: file.type
+          });
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="embed-type">Content Type</Label>
-        <Select
-          value={embedType}
-          onValueChange={(value) => setEmbedType(value as EmbedType)}
-        >
-          <SelectTrigger id="embed-type">
-            <SelectValue placeholder="Select content type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="iframe">
-              <div className="flex items-center gap-2">
-                <ExternalLink className="h-4 w-4" />
-                <span>Embed Website (iFrame)</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="video">
-              <div className="flex items-center gap-2">
-                <Video className="h-4 w-4" />
-                <span>Video (YouTube, Vimeo, etc.)</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="html">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span>HTML File</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="file">
-              <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                <span>Upload File (PDF, SCORM, etc.)</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="embed-title">Title</Label>
-        <Input
-          id="embed-title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter a title for this content"
-        />
-      </div>
-
-      {(embedType === "iframe" || embedType === "video") && (
-        <div className="space-y-2">
-          <Label htmlFor="embed-url">URL</Label>
+      <div className="grid grid-cols-1 gap-4">
+        <div>
+          <Label htmlFor="embed-url">Content URL</Label>
+          <div className="flex gap-2 mt-1.5">
+            <Input
+              id="embed-url"
+              value={embedUrl}
+              onChange={(e) => setEmbedUrl(e.target.value)}
+              placeholder="Enter URL for content"
+              className={!isValid ? "border-red-500" : ""}
+            />
+            <Button type="button" onClick={handleEmbed}>
+              <LinkIcon className="h-4 w-4 mr-2" />
+              Embed
+            </Button>
+          </div>
+        </div>
+        
+        <div>
+          <Label htmlFor="embed-title">Title (optional)</Label>
           <Input
-            id="embed-url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder={
-              embedType === "iframe"
-                ? "https://example.com"
-                : "https://www.youtube.com/embed/..."
-            }
+            id="embed-title"
+            value={embedTitle}
+            onChange={(e) => setEmbedTitle(e.target.value)}
+            placeholder="Title for this content"
+            className="mt-1.5"
           />
         </div>
+        
+        <div>
+          <Label>Or Upload File</Label>
+          <div className="mt-1.5">
+            <Label 
+              htmlFor="file-upload" 
+              className="cursor-pointer flex items-center justify-center p-4 border-2 border-dashed rounded-md hover:border-primary"
+            >
+              <div className="text-center">
+                <Upload className="mx-auto h-6 w-6 text-muted-foreground" />
+                <p className="mt-1 text-sm">Click to upload or drag and drop</p>
+                <p className="mt-1 text-xs text-muted-foreground">Images, videos, or documents</p>
+              </div>
+              <input
+                id="file-upload"
+                type="file"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </Label>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="embed-width">Width</Label>
+            <Input
+              id="embed-width"
+              value={embedWidth}
+              onChange={(e) => setEmbedWidth(e.target.value)}
+              placeholder="Width (e.g. 100% or 640px)"
+              className="mt-1.5"
+            />
+          </div>
+          <div>
+            <Label htmlFor="embed-height">Height</Label>
+            <Input
+              id="embed-height"
+              value={embedHeight}
+              onChange={(e) => setEmbedHeight(e.target.value)}
+              placeholder="Height (e.g. 315px)"
+              className="mt-1.5"
+            />
+          </div>
+        </div>
+      </div>
+
+      {!isValid && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
       )}
 
-      {(embedType === "html" || embedType === "file") && (
-        <div className="space-y-2">
-          <Label>Upload File</Label>
-          <FileUploader onFileUploaded={handleFileUploaded} />
-        </div>
+      {embedUrl && isValid && (
+        <Card className="mt-4">
+          <CardContent className="p-4">
+            <div className="text-sm font-medium mb-1">Preview</div>
+            <div className="text-sm text-muted-foreground mb-2">
+              {embedUrl.substring(0, 60)}{embedUrl.length > 60 ? '...' : ''}
+            </div>
+          </CardContent>
+        </Card>
       )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="embed-width">Width</Label>
-          <Input
-            id="embed-width"
-            value={width}
-            onChange={(e) => setWidth(e.target.value)}
-            placeholder="e.g., 100% or 600px"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="embed-height">Height</Label>
-          <Input
-            id="embed-height"
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-            placeholder="e.g., 400px"
-          />
-        </div>
-      </div>
-
-      <Button onClick={handleEmbed} className="w-full">
-        Embed Content
-      </Button>
     </div>
   );
 };

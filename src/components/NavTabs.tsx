@@ -40,15 +40,15 @@ const NavTabs = ({ activeTab, onTabChange, tabs = defaultTabs }: NavTabsProps) =
   
   return (
     <div className="bg-background border-b sticky top-0 z-30">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-2 sm:px-4">
         <Tabs value={activeTab} onValueChange={onTabChange}>
-          <div className="overflow-x-auto" ref={tabsListRef}>
+          <div className="overflow-x-auto -mx-2 px-2 scrollbar-hide" ref={tabsListRef}>
             <TabsList className="py-1 w-auto inline-flex mb-0">
               {tabs.map(tab => (
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id}
-                  className="py-3 px-4 data-[state=active]:bg-background whitespace-nowrap"
+                  className="py-3 px-3 sm:px-4 data-[state=active]:bg-background whitespace-nowrap text-xs sm:text-sm"
                 >
                   {tab.label}
                 </TabsTrigger>
