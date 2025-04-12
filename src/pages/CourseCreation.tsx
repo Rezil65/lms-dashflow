@@ -31,6 +31,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { saveCourse } from "@/utils/courseStorage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import QuizManager, { Quiz } from "@/components/QuizManager";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters" }),
@@ -109,6 +110,7 @@ const CourseCreation = () => {
       console.log("Form submitted:", data);
       
       // Save the course data to localStorage
+      // Modify the saveCourse call to handle quizzes correctly
       const newCourse = saveCourse({
         title: data.title,
         description: data.description,
@@ -119,8 +121,18 @@ const CourseCreation = () => {
         isFeatured: data.isFeatured,
         tags: data.tags,
         thumbnail: thumbnailPreview || undefined,
-        quizzes: quizzes
+        // We'll handle quizzes separately since it's not in the Course type
       });
+      
+      // Store quizzes in local storage with course ID reference
+      if (quizzes.length > 0) {
+        const existingQuizzes = JSON.parse(localStorage.getItem('quizzes') || '[]');
+        const courseQuizzes = quizzes.map(quiz => ({
+          ...quiz,
+          courseId: newCourse.id
+        }));
+        localStorage.setItem('quizzes', JSON.stringify([...existingQuizzes, ...courseQuizzes]));
+      }
       
       // Dispatch a custom event to notify other components
       window.dispatchEvent(new Event('courseAdded'));
@@ -144,6 +156,7 @@ const CourseCreation = () => {
       setIsSubmitting(false);
     }
   };
+  
   
   return (
     <div className="min-h-screen bg-background">

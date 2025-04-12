@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DashboardOverview from "@/components/admin/DashboardOverview";
@@ -18,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeedPost } from "@/components/CourseFeeds";
+import { Button } from "@/components/ui/button";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -38,12 +38,10 @@ const AdminDashboard = () => {
     { id: "help", label: "Help & Support", component: <HelpSupport />, permission: null },
   ];
 
-  // Filter tabs based on permissions
   const authorizedTabs = tabs.filter(tab => 
     tab.permission === null || hasPermission(tab.permission)
   );
 
-  // If current active tab is not authorized, default to the first authorized tab
   if (authorizedTabs.length > 0 && !authorizedTabs.some(tab => tab.id === activeTab)) {
     setActiveTab(authorizedTabs[0].id);
   }
@@ -97,13 +95,11 @@ const AdminDashboard = () => {
   );
 };
 
-// Course Feed Manager Component
 const CourseFeedManager = () => {
   const [feeds, setFeeds] = useState<FeedPost[]>([]);
   const [editingFeed, setEditingFeed] = useState<FeedPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   
-  // Mock data for initial feeds
   const mockFeeds: FeedPost[] = [
     {
       id: "feed1",
@@ -147,17 +143,14 @@ const CourseFeedManager = () => {
   ];
 
   useEffect(() => {
-    // In a real app, fetch feeds from an API
     setFeeds(mockFeeds);
   }, []);
 
   const handleSaveFeed = (feed: FeedPost) => {
     if (editingFeed) {
-      // Update existing feed
       setFeeds(feeds.map(f => f.id === feed.id ? feed : f));
       setEditingFeed(null);
     } else {
-      // Add new feed
       setFeeds([feed, ...feeds]);
       setIsCreating(false);
     }
