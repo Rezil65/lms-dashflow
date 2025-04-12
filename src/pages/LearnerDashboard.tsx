@@ -25,7 +25,7 @@ const LearnerDashboard = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['dashboard', 'courses', 'my-learnings', 'learning-paths', 'analytics', 'quizzes'].includes(tabParam)) {
+    if (tabParam && ['dashboard', 'courses', 'my-learnings', 'learning-paths', 'analytics', 'courses-content'].includes(tabParam)) {
       setActiveTab(tabParam);
     } else if (!searchParams.has('tab')) {
       // Set default tab if no tab parameter exists
@@ -60,9 +60,9 @@ const LearnerDashboard = () => {
           { id: "dashboard", label: "Dashboard" },
           { id: "courses", label: "Courses" },
           { id: "my-learnings", label: "My Learnings" },
+          { id: "courses-content", label: "Course Content" },
           { id: "learning-paths", label: "Learning Paths" },
-          { id: "analytics", label: "Analytics" },
-          { id: "quizzes", label: "Quizzes" }
+          { id: "analytics", label: "Analytics" }
         ]}
       />
       
@@ -111,9 +111,9 @@ const LearnerDashboard = () => {
         
         {activeTab === "courses" && <CoursesTab />}
         {activeTab === "my-learnings" && <MyLearningsTab />}
+        {activeTab === "courses-content" && <CourseModules />}
         {activeTab === "learning-paths" && <CourseFeeds />}
         {activeTab === "analytics" && <AnalyticsTab />}
-        {activeTab === "quizzes" && <Quizzes />}
       </main>
     </div>
   );

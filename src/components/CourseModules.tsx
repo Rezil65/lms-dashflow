@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ChevronRight, BookOpen, ArrowRight, CheckCircle } from "lucide-react";
+import { ChevronRight, BookOpen, ArrowRight, CheckCircle, Video, BookOpenCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Course, getCourseById } from "@/utils/courseStorage";
 import { Module } from "@/components/ModuleEditor";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
+import QuizTaker from "./QuizTaker";
 
 interface CourseModulesProps {
   isPreview?: boolean;
@@ -33,13 +33,20 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({});
   const [showProgress, setShowProgress] = useState(true);
+  const [fullscreenContent, setFullscreenContent] = useState<{
+    isActive: boolean;
+    contentType: string;
+    url?: string;
+    html?: string;
+    quiz?: any;
+    title?: string;
+    lessonId?: string;
+  } | null>(null);
 
   useEffect(() => {
-    // Fetch modules from the course
     const fetchCourseData = async () => {
       setLoading(true);
       
-      // Try to get the course from storage using the courseId
       try {
         const parsedCourseId = parseInt(courseId);
         const foundCourse = getCourseById(parsedCourseId);
@@ -51,21 +58,17 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
               ? foundCourse.modules.slice(0, 2) 
               : foundCourse.modules);
           } else {
-            // If no modules, create mock modules
             const mockModules = createMockModules();
             setModules(isPreview ? mockModules.slice(0, 2) : mockModules);
           }
         } else {
-          // If course not found, use mock modules
           setModules(isPreview ? createMockModules().slice(0, 2) : createMockModules());
         }
       } catch (error) {
         console.error("Error fetching course:", error);
-        // Fallback to mock modules
         setModules(isPreview ? createMockModules().slice(0, 2) : createMockModules());
       }
       
-      // Load completed lessons from localStorage
       const storedCompletedLessons = localStorage.getItem('completedLessons');
       if (storedCompletedLessons) {
         setCompletedLessons(JSON.parse(storedCompletedLessons));
@@ -174,7 +177,6 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
   const toggleLessonCompletion = (lessonId: string) => {
     const updatedCompletedLessons = {...completedLessons};
     
-    // Toggle the completion status
     updatedCompletedLessons[lessonId] = !updatedCompletedLessons[lessonId];
     
     setCompletedLessons(updatedCompletedLessons);
@@ -191,17 +193,62 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
     setShowProgress(!showProgress);
   };
 
+  const handleQuizComplete = (lessonId: string, score: number, total: number) => {
+    const updatedCompletedLessons = { ...completedLessons, [lessonId]: true };
+    setCompletedLessons(updatedCompletedLessons);
+    localStorage.setItem('completedLessons', JSON.stringify(updatedCompletedLessons));
+    
+    toast({
+      title: "Quiz Completed",
+      description: `You scored ${score} out of ${total}`,
+    });
+    
+    if (fullscreenContent && fullscreenContent.lessonId === lessonId) {
+      setFullscreenContent(null);
+    }
+  };
+
+  const toggleFullscreen = (lesson: any) => {
+    if (fullscreenContent) {
+      setFullscreenContent(null);
+    } else {
+      setFullscreenContent({
+        isActive: true,
+        contentType: lesson.type,
+        url: lesson.embedData?.url,
+        html: lesson.content,
+        quiz: lesson.quiz,
+        title: lesson.title,
+        lessonId: lesson.id
+      });
+    }
+  };
+
   const renderLessonContent = (lesson: any) => {
     switch (lesson.type) {
       case "text":
         return (
           <div className="text-sm text-muted-foreground mt-2">
-            <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+            <div className="relative">
+              <button 
+                onClick={() => toggleFullscreen(lesson)}
+                className="absolute top-0 right-0 text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+              >
+                View Fullscreen
+              </button>
+              <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+            </div>
           </div>
         );
       case "video":
         return lesson.embedData?.url ? (
-          <div className="mt-2">
+          <div className="mt-2 relative">
+            <button 
+              onClick={() => toggleFullscreen(lesson)}
+              className="absolute top-0 right-0 z-10 text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+            >
+              View Fullscreen
+            </button>
             <iframe
               src={lesson.embedData.url}
               width={lesson.embedData.width || "100%"}
@@ -214,9 +261,32 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
         ) : (
           <div className="text-sm text-muted-foreground mt-2">No video URL provided</div>
         );
+      case "quiz":
+        return lesson.quiz ? (
+          <div className="mt-2 relative">
+            <button 
+              onClick={() => toggleFullscreen(lesson)}
+              className="mb-2 text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+            >
+              View Fullscreen
+            </button>
+            <QuizTaker 
+              quiz={lesson.quiz} 
+              onComplete={(score, total) => handleQuizComplete(lesson.id, score, total)} 
+            />
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground mt-2">No quiz content available</div>
+        );
       case "image":
         return lesson.embedData?.url ? (
-          <div className="mt-2">
+          <div className="mt-2 relative">
+            <button 
+              onClick={() => toggleFullscreen(lesson)}
+              className="absolute top-0 right-0 z-10 text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+            >
+              View Fullscreen
+            </button>
             <img
               src={lesson.embedData.url}
               alt={lesson.title}
@@ -228,10 +298,27 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
         );
       default:
         return (
-          <div className="text-sm text-muted-foreground mt-2">
+          <div className="text-sm text-muted-foreground mt-2 relative">
+            <button 
+              onClick={() => toggleFullscreen(lesson)}
+              className="absolute top-0 right-0 text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+            >
+              View Fullscreen
+            </button>
             {lesson.content || "No content available"}
           </div>
         );
+    }
+  };
+
+  const getLessonIcon = (type: string) => {
+    switch (type) {
+      case "video":
+        return <Video className="h-4 w-4" />;
+      case "quiz":
+        return <BookOpenCheck className="h-4 w-4" />;
+      default:
+        return <BookOpen className="h-4 w-4" />;
     }
   };
 
@@ -330,7 +417,9 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                       {completedLessons[lesson.id] ? (
                         <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                       ) : (
-                        <div className="h-4 w-4 border-2 rounded-full border-muted-foreground flex-shrink-0" />
+                        <div className="h-4 w-4 border-2 rounded-full border-muted-foreground flex-shrink-0">
+                          {getLessonIcon(lesson.type)}
+                        </div>
                       )}
                       <div>
                         <div className="font-medium">{lesson.title}</div>
@@ -360,6 +449,80 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
           )}
         </DialogContent>
       </Dialog>
+      
+      {fullscreenContent && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center overflow-auto p-4">
+          <button 
+            onClick={() => setFullscreenContent(null)} 
+            className="absolute top-4 right-4 text-white hover:text-primary bg-black/30 p-2 rounded-full"
+            aria-label="Close fullscreen"
+          >
+            <ChevronRight size={24} />
+          </button>
+          
+          <div className="w-full max-w-5xl">
+            {fullscreenContent.title && (
+              <h2 className="text-white text-xl font-semibold mb-4">{fullscreenContent.title}</h2>
+            )}
+            
+            {fullscreenContent.contentType === "text" && (
+              <div 
+                className="prose prose-sm max-w-none bg-white/10 p-6 rounded-lg backdrop-blur-sm text-white"
+                dangerouslySetInnerHTML={{ __html: fullscreenContent.html || "" }}
+              />
+            )}
+            
+            {fullscreenContent.contentType === "video" && fullscreenContent.url && (
+              <div className="aspect-video w-full">
+                <iframe
+                  src={fullscreenContent.url}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            )}
+            
+            {(fullscreenContent.contentType === "iframe" || 
+              fullscreenContent.contentType === "html" || 
+              fullscreenContent.contentType === "file") && 
+              fullscreenContent.url && (
+              <div className="aspect-video w-full">
+                <iframe
+                  src={fullscreenContent.url}
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            )}
+            
+            {fullscreenContent.contentType === "quiz" && fullscreenContent.quiz && (
+              <div className="max-w-3xl mx-auto bg-white/10 rounded-lg backdrop-blur-sm p-6">
+                <QuizTaker 
+                  quiz={fullscreenContent.quiz} 
+                  onComplete={(score, total) => {
+                    handleQuizComplete(fullscreenContent.lessonId || "", score, total);
+                  }} 
+                />
+              </div>
+            )}
+            
+            {fullscreenContent.contentType === "image" && fullscreenContent.url && (
+              <div className="flex justify-center">
+                <img
+                  src={fullscreenContent.url}
+                  alt={fullscreenContent.title || "Image content"}
+                  className="max-h-[80vh] max-w-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

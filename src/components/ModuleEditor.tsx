@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +38,7 @@ export interface Lesson {
   type: string;
   duration: string;
   embedData?: EmbedData;
+  quiz?: Quiz;
 }
 
 export interface Module {

@@ -7,10 +7,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Video, FileText, File, Maximize, Minimize, ExternalLink } from "lucide-react";
+import { Video, FileText, File, Maximize, Minimize, ExternalLink, BookOpen, CheckCircle2 } from "lucide-react";
 import { Module, Lesson } from "./ModuleEditor";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import QuizTaker from "./QuizTaker";
+import { Quiz } from "./QuizManager";
+import { toast } from "@/components/ui/use-toast";
 
 interface ModuleDisplayProps {
   module: Module;
@@ -24,8 +27,14 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
     contentType: string;
     url?: string;
     html?: string;
+    quiz?: Quiz;
+    title?: string;
   } | null>(null);
   const { hasRole } = useAuth();
+  const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>(() => {
+    const stored = localStorage.getItem(`module-${module.id}-completed-lessons`);
+    return stored ? JSON.parse(stored) : {};
+  });
   
   const isInstructor = hasRole(["admin", "instructor"]);
 
@@ -38,6 +47,8 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
       case "html":
       case "iframe":
         return <FileText className="h-4 w-4" />;
+      case "quiz":
+        return <BookOpen className="h-4 w-4" />;
       default:
         return <File className="h-4 w-4" />;
     }
@@ -52,8 +63,35 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
         contentType: lesson.type,
         url: lesson.embedData?.url,
         html: lesson.content,
+        quiz: lesson.quiz,
+        title: lesson.title
       });
     }
+  };
+
+  const handleQuizComplete = (lessonId: string, score: number, total: number) => {
+    const updatedCompletedLessons = { ...completedLessons, [lessonId]: true };
+    setCompletedLessons(updatedCompletedLessons);
+    localStorage.setItem(`module-${module.id}-completed-lessons`, JSON.stringify(updatedCompletedLessons));
+    
+    toast({
+      title: "Quiz Completed",
+      description: `You scored ${score} out of ${total}`,
+    });
+  };
+
+  const toggleLessonCompletion = (lessonId: string) => {
+    const updatedCompletedLessons = { 
+      ...completedLessons, 
+      [lessonId]: !completedLessons[lessonId] 
+    };
+    setCompletedLessons(updatedCompletedLessons);
+    localStorage.setItem(`module-${module.id}-completed-lessons`, JSON.stringify(updatedCompletedLessons));
+    
+    toast({
+      title: completedLessons[lessonId] ? "Lesson marked as incomplete" : "Lesson marked as complete",
+      duration: 2000
+    });
   };
 
   return (
@@ -74,7 +112,7 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {module.lessons.length > 0 ? (
+          {module.lessons && module.lessons.length > 0 ? (
             <Accordion
               type="single"
               collapsible
@@ -91,6 +129,9 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
                           {getLessonIcon(lesson.type)}
                         </div>
                         <span>{lesson.title}</span>
+                        {completedLessons[lesson.id] && (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs bg-muted px-2 py-0.5 rounded">
@@ -105,13 +146,20 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
                   <AccordionContent className="px-4 py-2">
                     {lesson.type === "text" && (
                       <div className="fullscreen-container">
-                        <button 
-                          onClick={() => toggleFullscreen(lesson)}
-                          className="fullscreen-toggle"
-                          aria-label="Toggle fullscreen"
-                        >
-                          <Maximize size={16} />
-                        </button>
+                        <div className="flex justify-between mb-2">
+                          <button 
+                            onClick={() => toggleLessonCompletion(lesson.id)}
+                            className="text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+                          >
+                            {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
+                          </button>
+                          <button 
+                            onClick={() => toggleFullscreen(lesson)}
+                            className="text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+                          >
+                            <Maximize size={12} className="inline mr-1" /> View Fullscreen
+                          </button>
+                        </div>
                         <div
                           className="prose prose-sm max-w-none"
                           dangerouslySetInnerHTML={{ __html: lesson.content }}
@@ -119,15 +167,40 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
                       </div>
                     )}
                     
+                    {lesson.type === "quiz" && lesson.quiz && (
+                      <div className="relative">
+                        <div className="flex justify-between mb-4">
+                          <h3 className="font-medium">{lesson.quiz.title}</h3>
+                          <button 
+                            onClick={() => toggleFullscreen(lesson)}
+                            className="text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+                          >
+                            <Maximize size={12} className="inline mr-1" /> View Fullscreen
+                          </button>
+                        </div>
+                        <QuizTaker 
+                          quiz={lesson.quiz} 
+                          onComplete={(score, total) => handleQuizComplete(lesson.id, score, total)} 
+                        />
+                      </div>
+                    )}
+                    
                     {lesson.embedData && (
                       <div className="relative rounded border overflow-hidden">
-                        <button 
-                          onClick={() => toggleFullscreen(lesson)}
-                          className="fullscreen-toggle"
-                          aria-label="Toggle fullscreen"
-                        >
-                          <Maximize size={16} />
-                        </button>
+                        <div className="flex justify-between mb-2">
+                          <button 
+                            onClick={() => toggleLessonCompletion(lesson.id)}
+                            className="text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+                          >
+                            {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
+                          </button>
+                          <button 
+                            onClick={() => toggleFullscreen(lesson)}
+                            className="text-xs bg-muted/50 hover:bg-muted px-2 py-1 rounded-md transition-colors"
+                          >
+                            <Maximize size={12} className="inline mr-1" /> View Fullscreen
+                          </button>
+                        </div>
                         
                         {lesson.type === "video" && (
                           <iframe
@@ -173,16 +246,20 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
       
       {/* Fullscreen content modal */}
       {fullscreenContent && (
-        <div className="fullscreen-content">
+        <div className="fullscreen-content fixed inset-0 bg-black/90 z-50 flex items-center justify-center overflow-auto p-4">
           <button 
             onClick={() => setFullscreenContent(null)} 
-            className="absolute top-4 right-4 text-white hover:text-primary"
+            className="absolute top-4 right-4 text-white hover:text-primary bg-black/30 p-2 rounded-full"
             aria-label="Close fullscreen"
           >
             <Minimize size={24} />
           </button>
           
           <div className="w-full max-w-5xl">
+            {fullscreenContent.title && (
+              <h2 className="text-white text-xl font-semibold mb-4">{fullscreenContent.title}</h2>
+            )}
+            
             {fullscreenContent.contentType === "text" && (
               <div 
                 className="prose prose-sm max-w-none bg-white/10 p-6 rounded-lg backdrop-blur-sm text-white"
@@ -215,6 +292,20 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
                   frameBorder="0"
                   allowFullScreen
                 ></iframe>
+              </div>
+            )}
+            
+            {fullscreenContent.contentType === "quiz" && fullscreenContent.quiz && (
+              <div className="max-w-3xl mx-auto bg-white/10 rounded-lg backdrop-blur-sm p-6">
+                <QuizTaker 
+                  quiz={fullscreenContent.quiz} 
+                  onComplete={(score, total) => {
+                    toast({
+                      title: "Quiz Completed",
+                      description: `You scored ${score} out of ${total}`,
+                    });
+                  }} 
+                />
               </div>
             )}
           </div>

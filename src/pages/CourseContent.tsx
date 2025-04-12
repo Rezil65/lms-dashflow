@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Upload, Video, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Upload, Video, FileText, MinusCircle, PlusCircle } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -19,6 +18,7 @@ import ModuleDisplay from "@/components/ModuleDisplay";
 import ContentEmbedder, { EmbedData } from "@/components/ContentEmbedder";
 import { Card, CardContent } from "@/components/ui/card";
 import NotesManager from "@/components/NotesManager";
+import QuizManager, { Quiz } from "@/components/QuizManager";
 
 const defaultModules: Module[] = [
   {
@@ -73,6 +73,7 @@ const CourseContent = () => {
   const [modules, setModules] = useState<Module[]>([]);
   const [editingCourseInfo, setEditingCourseInfo] = useState(false);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [showProgressCard, setShowProgressCard] = useState(true);
   const { hasRole } = useAuth();
   
   const courseId = id || "0";
@@ -148,6 +149,10 @@ const CourseContent = () => {
       title: "Content Embedded",
       description: `${embedData.title} has been embedded in the course.`
     });
+  };
+  
+  const toggleProgressCard = () => {
+    setShowProgressCard(!showProgressCard);
   };
   
   return (
@@ -242,6 +247,7 @@ const CourseContent = () => {
                   <Tabs defaultValue="content" className="w-full">
                     <TabsList className="mb-4">
                       <TabsTrigger value="content">Course Content</TabsTrigger>
+                      <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
                       {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
                       <TabsTrigger value="notes">My Notes</TabsTrigger>
                     </TabsList>
@@ -272,6 +278,17 @@ const CourseContent = () => {
                           />
                         )
                       ))}
+                    </TabsContent>
+                    
+                    <TabsContent value="quizzes">
+                      {canEdit ? (
+                        <QuizManager courseId={parseInt(courseId)} />
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">Quizzes are now integrated within the modules.</p>
+                          <p className="text-sm text-muted-foreground mt-2">Navigate to the modules to take quizzes.</p>
+                        </div>
+                      )}
                     </TabsContent>
 
                     {canEdit && (
@@ -332,52 +349,64 @@ const CourseContent = () => {
           </div>
           
           <div>
-            <Card className="sticky top-4">
-              <CardContent className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Your Progress</h2>
-                <div className="mb-6">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-muted-foreground">Course Completion</span>
-                    <span className="text-sm font-medium">45%</span>
-                  </div>
-                  <Progress value={45} className="h-2" />
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Continue Learning</h3>
-                    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-blue-100 text-blue-600 rounded-full p-1">
-                          <Video className="h-4 w-4" />
-                        </div>
-                        <span className="font-medium">Advanced Techniques</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Module 2 • 18 minutes
-                      </div>
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-lg font-semibold">Your Progress</h2>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={toggleProgressCard} 
+                className="h-8 w-8 p-0 rounded-full"
+              >
+                {showProgressCard ? <MinusCircle className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}
+              </Button>
+            </div>
+            {showProgressCard && (
+              <Card className="sticky top-4">
+                <CardContent className="p-6">
+                  <div className="mb-6">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm text-muted-foreground">Course Completion</span>
+                      <span className="text-sm font-medium">45%</span>
                     </div>
+                    <Progress value={45} className="h-2" />
                   </div>
                   
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">Next Up</h3>
-                    <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-gray-100 text-gray-600 rounded-full p-1">
-                          <FileText className="h-4 w-4" />
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">Continue Learning</h3>
+                      <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="bg-blue-100 text-blue-600 rounded-full p-1">
+                            <Video className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Advanced Techniques</span>
                         </div>
-                        <span className="font-medium">Project Documentation</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Module 3 • PDF
+                        <div className="text-xs text-muted-foreground">
+                          Module 2 • 18 minutes
+                        </div>
                       </div>
                     </div>
+                    
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">Next Up</h3>
+                      <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="bg-gray-100 text-gray-600 rounded-full p-1">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-medium">Project Documentation</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Module 3 • PDF
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Button className="w-full">Resume Course</Button>
                   </div>
-                  
-                  <Button className="w-full">Resume Course</Button>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>
