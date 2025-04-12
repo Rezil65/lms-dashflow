@@ -150,6 +150,7 @@
   perspective: 2000px;
 }
 
+/* Card 3D effect using direct CSS instead of Tailwind classes */
 .card-3d {
   transition: all 0.3s ease;
   transform-style: preserve-3d;

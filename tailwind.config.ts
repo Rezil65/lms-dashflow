@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -78,6 +77,12 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			transform: {
+				'perspective-1000': 'perspective(1000px)',
+			},
+			perspective: {
+				'1000': '1000px',
 			},
 			keyframes: {
 				'accordion-down': {
