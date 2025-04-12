@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ export interface FeedPost {
   tags: string[];
   likes: number;
   comments: number;
+  courseId?: string | number; // Added courseId as an optional property
 }
 
 interface CourseFeedsProps {
