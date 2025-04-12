@@ -1,40 +1,44 @@
 
-import { useState } from "react";
-import { ChartBar, Compass, GraduationCap, LayoutDashboard, BookOpen } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface Tab {
+  id: string;
+  label: string;
+}
 
 interface NavTabsProps {
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  tabs?: Tab[];
 }
 
-const NavTabs = ({ activeTab, onTabChange }: NavTabsProps) => {
-  const tabs = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "courses", label: "Courses", icon: Compass },
-    { id: "my-learnings", label: "My Learnings", icon: GraduationCap },
-    { id: "learning-paths", label: "Course Feeds", icon: BookOpen },
-    { id: "analytics", label: "Analytics", icon: ChartBar },
-  ];
-  
+const defaultTabs: Tab[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "courses", label: "Courses" },
+  { id: "my-learnings", label: "My Learnings" },
+  { id: "learning-paths", label: "Learning Paths" },
+  { id: "analytics", label: "Analytics" }
+];
+
+const NavTabs = ({ activeTab, onTabChange, tabs = defaultTabs }: NavTabsProps) => {
   return (
-    <div className="border-b sticky top-0 z-10 bg-background">
-      <div className="container mx-auto px-4 overflow-x-auto">
-        <nav className="flex space-x-1 min-w-max">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`px-4 py-3 text-sm font-medium flex items-center transition-all whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <tab.icon className="w-4 h-4 mr-2" />
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+    <div className="bg-background border-b sticky top-0 z-30">
+      <div className="container mx-auto px-4">
+        <Tabs value={activeTab} onValueChange={onTabChange}>
+          <div className="overflow-x-auto">
+            <TabsList className="py-1 w-auto inline-flex mb-0">
+              {tabs.map(tab => (
+                <TabsTrigger 
+                  key={tab.id} 
+                  value={tab.id}
+                  className="py-3 px-4 data-[state=active]:bg-background"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+        </Tabs>
       </div>
     </div>
   );

@@ -1,538 +1,498 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { 
-  Plus, Trash, Video, FileText, File, Pencil, Save, X, Image, Code, ExternalLink 
-} from "lucide-react";
-import RichTextEditor from "./RichTextEditor";
-import ContentEmbedder, { EmbedData } from "./ContentEmbedder";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/context/AuthContext";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Plus, Trash2, MoveUp, MoveDown, FileText, Video, FileImage, File, RefreshCw, Link as LinkIcon } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ContentEmbedder } from "./ContentEmbedder";
+import { useToast } from "@/hooks/use-toast";
+import QuizManager, { Quiz } from "./QuizManager";
+
+export interface EmbedData {
+  url: string;
+  width?: string;
+  height?: string;
+  title?: string;
+}
 
 export interface Lesson {
   id: string;
   title: string;
-  type: string;
   content: string;
-  duration?: string;
+  type: string;
+  duration: string;
   embedData?: EmbedData;
-  htmlContent?: string;
+  quizId?: string;
 }
 
 export interface Module {
-  id: number;
+  id: string;
   title: string;
   description: string;
   lessons: Lesson[];
 }
 
 interface ModuleEditorProps {
-  module: Module;
-  onSave: (updatedModule: Module) => void;
-  onCancel: () => void;
+  initialModule?: Module;
+  onSave: (module: Module) => void;
+  courseId: string;
 }
 
-const ModuleEditor = ({ module, onSave, onCancel }: ModuleEditorProps) => {
-  const { hasPermission } = useAuth();
-  const [editedModule, setEditedModule] = useState<Module>({ ...module });
-  const [addingLesson, setAddingLesson] = useState(false);
-  const [lessonType, setLessonType] = useState<"text" | "embed" | "iframe" | "html" | "video">("text");
-  const [lessonTitle, setLessonTitle] = useState("");
-  const [lessonContent, setLessonContent] = useState("");
-  const [htmlContent, setHtmlContent] = useState("");
-  const [iframeUrl, setIframeUrl] = useState("");
-  const [iframeWidth, setIframeWidth] = useState("100%");
-  const [iframeHeight, setIframeHeight] = useState("400px");
-  const [lessonDuration, setLessonDuration] = useState("");
-  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("editor");
+const ModuleEditor = ({ initialModule, onSave, courseId }: ModuleEditorProps) => {
+  const [module, setModule] = useState<Module>(initialModule || {
+    id: Date.now().toString(),
+    title: "New Module",
+    description: "",
+    lessons: [],
+  });
+  
+  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [quizDialogOpen, setQuizDialogOpen] = useState(false);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [availableQuizzes, setAvailableQuizzes] = useState<Quiz[]>([]);
+  const { toast } = useToast();
 
-  // Handle module title and description changes
-  const handleModuleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedModule({ ...editedModule, title: e.target.value });
-  };
+  useEffect(() => {
+    // Fetch available quizzes for this course
+    // This is a mock, in a real app you'd fetch from API
+    const mockQuizzes: Quiz[] = [
+      {
+        id: "quiz1",
+        title: "HTML Basics Quiz",
+        description: "Test your knowledge of HTML fundamentals",
+        type: "multiple-choice",
+        options: [
+          { id: "opt1", text: "Option 1", isCorrect: false },
+          { id: "opt2", text: "Option 2", isCorrect: true },
+        ],
+        courseId: courseId
+      },
+      {
+        id: "quiz2",
+        title: "CSS Properties Quiz",
+        description: "Test your understanding of CSS properties and values",
+        type: "single-choice",
+        options: [
+          { id: "opt1", text: "Option 1", isCorrect: true },
+          { id: "opt2", text: "Option 2", isCorrect: false },
+        ],
+        courseId: courseId
+      }
+    ];
 
-  const handleModuleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedModule({ ...editedModule, description: e.target.value });
-  };
+    setAvailableQuizzes(mockQuizzes);
+  }, [courseId]);
 
-  // Initialize lesson creation
   const handleAddLesson = () => {
-    setAddingLesson(true);
-    setLessonTitle("");
-    setLessonContent("");
-    setHtmlContent("");
-    setIframeUrl("");
-    setIframeWidth("100%");
-    setIframeHeight("400px");
-    setLessonDuration("");
-    setLessonType("text");
-    setActiveTab("editor");
+    setCurrentLesson({
+      id: Date.now().toString(),
+      title: "",
+      content: "",
+      type: "text",
+      duration: "5 mins"
+    });
+    setEditingIndex(null);
+    setLessonDialogOpen(true);
   };
 
-  // Save lesson based on type
+  const handleEditLesson = (lesson: Lesson, index: number) => {
+    setCurrentLesson({ ...lesson });
+    setEditingIndex(index);
+    setLessonDialogOpen(true);
+  };
+
   const handleSaveLesson = () => {
-    if (!lessonTitle.trim()) {
-      alert("Please enter a lesson title");
+    if (!currentLesson || !currentLesson.title) return;
+
+    const updatedLessons = [...module.lessons];
+    
+    if (editingIndex !== null) {
+      updatedLessons[editingIndex] = currentLesson;
+    } else {
+      updatedLessons.push(currentLesson);
+    }
+    
+    setModule({ ...module, lessons: updatedLessons });
+    setLessonDialogOpen(false);
+    
+    toast({
+      title: `Lesson ${editingIndex !== null ? "Updated" : "Added"}`,
+      description: currentLesson.title,
+    });
+  };
+
+  const handleSaveQuizzes = (quizzes: Quiz[]) => {
+    setAvailableQuizzes(quizzes);
+    setQuizDialogOpen(false);
+    
+    toast({
+      title: "Quizzes Saved",
+      description: `${quizzes.length} quizzes available for this course.`
+    });
+  };
+
+  const handleDeleteLesson = (index: number) => {
+    const updatedLessons = [...module.lessons];
+    updatedLessons.splice(index, 1);
+    setModule({ ...module, lessons: updatedLessons });
+    
+    toast({
+      title: "Lesson Deleted",
+      description: "The lesson has been removed from this module.",
+    });
+  };
+
+  const handleMoveLesson = (index: number, direction: "up" | "down") => {
+    if (
+      (direction === "up" && index === 0) || 
+      (direction === "down" && index === module.lessons.length - 1)
+    ) {
       return;
     }
+    
+    const updatedLessons = [...module.lessons];
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    const lesson = updatedLessons[index];
+    
+    updatedLessons.splice(index, 1);
+    updatedLessons.splice(newIndex, 0, lesson);
+    
+    setModule({ ...module, lessons: updatedLessons });
+  };
 
-    let newLesson: Lesson = {
-      id: `${module.id}-${Date.now()}`,
-      title: lessonTitle,
-      type: lessonType,
-      content: "",
-      duration: lessonDuration || "N/A",
-    };
-
-    switch (lessonType) {
-      case "text":
-        if (!lessonContent.trim()) {
-          alert("Please enter lesson content");
-          return;
-        }
-        newLesson.content = lessonContent;
-        break;
-      
-      case "html":
-        if (!htmlContent.trim()) {
-          alert("Please enter HTML content");
-          return;
-        }
-        newLesson.content = "HTML Content";
-        newLesson.htmlContent = htmlContent;
-        break;
-      
-      case "iframe":
-        if (!iframeUrl.trim()) {
-          alert("Please enter iframe URL");
-          return;
-        }
-        newLesson.content = "Iframe Content";
-        newLesson.embedData = {
-          type: "iframe",
-          url: iframeUrl,
-          width: iframeWidth,
-          height: iframeHeight,
-          title: lessonTitle
-        };
-        break;
-      
-      case "video":
-        // This will be handled by ContentEmbedder component
-        return;
+  const handleSaveModule = () => {
+    if (!module.title) {
+      toast({
+        title: "Module Title Required",
+        description: "Please provide a title for this module.",
+        variant: "destructive"
+      });
+      return;
     }
-
-    setEditedModule({
-      ...editedModule,
-      lessons: [...editedModule.lessons, newLesson],
-    });
-
-    setAddingLesson(false);
-  };
-
-  // Remove a lesson from the module
-  const handleRemoveLesson = (lessonId: string) => {
-    setEditedModule({
-      ...editedModule,
-      lessons: editedModule.lessons.filter((lesson) => lesson.id !== lessonId),
+    
+    onSave(module);
+    
+    toast({
+      title: "Module Saved",
+      description: "Module and all lessons have been saved successfully.",
     });
   };
-
-  // Handle embedding content (video, iframe, etc.)
-  const handleEmbedContent = (embedData: EmbedData) => {
+  
+  const handleAddLessonWithQuiz = (quizId: string) => {
+    const quiz = availableQuizzes.find(q => q.id === quizId);
+    if (!quiz) return;
+    
     const newLesson: Lesson = {
-      id: `${module.id}-${Date.now()}`,
-      title: embedData.title || lessonTitle,
-      type: embedData.type,
-      content: embedData.type === "video" ? "Video content" : "Embedded content",
-      duration: lessonDuration || "N/A",
-      embedData,
+      id: Date.now().toString(),
+      title: `Quiz: ${quiz.title}`,
+      content: quiz.description,
+      type: "quiz",
+      duration: "15 mins",
+      quizId: quiz.id
     };
-
-    setEditedModule({
-      ...editedModule,
-      lessons: [...editedModule.lessons, newLesson],
+    
+    setModule({ ...module, lessons: [...module.lessons, newLesson] });
+    
+    toast({
+      title: "Quiz Added as Lesson",
+      description: `Quiz "${quiz.title}" has been added to this module.`
     });
-
-    setAddingLesson(false);
-  };
-
-  // Get icon based on lesson type
-  const getLessonIcon = (type: string) => {
-    switch (type) {
-      case "video":
-        return <Video className="h-4 w-4" />;
-      case "text":
-        return <FileText className="h-4 w-4" />;
-      case "html":
-        return <Code className="h-4 w-4" />;
-      case "iframe":
-        return <ExternalLink className="h-4 w-4" />;
-      case "image":
-        return <Image className="h-4 w-4" />;
-      default:
-        return <File className="h-4 w-4" />;
-    }
   };
 
   return (
-    <Card className="mb-6">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="module-title">Module Title</Label>
           <Input
-            value={editedModule.title}
-            onChange={handleModuleTitleChange}
-            className="text-xl font-semibold"
-            placeholder="Module Title"
+            id="module-title"
+            value={module.title}
+            onChange={(e) => setModule({ ...module, title: e.target.value })}
+            placeholder="Enter module title"
+            className="mt-1"
           />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          value={editedModule.description}
-          onChange={handleModuleDescriptionChange}
-          placeholder="Module description"
-          className="min-h-20"
-        />
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold">Lessons</h3>
-            <div className="flex gap-2">
-              <Dialog open={addingLesson} onOpenChange={setAddingLesson}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" onClick={() => handleAddLesson()}>
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    Add Lesson
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[700px]">
-                  <DialogHeader>
-                    <DialogTitle>Add New Lesson</DialogTitle>
-                    <DialogDescription>
-                      Create a new lesson with various content types
-                    </DialogDescription>
-                  </DialogHeader>
+        <div>
+          <Label htmlFor="module-description">Description</Label>
+          <Textarea
+            id="module-description"
+            value={module.description}
+            onChange={(e) => setModule({ ...module, description: e.target.value })}
+            placeholder="A short description of this module"
+            className="mt-1"
+            rows={3}
+          />
+        </div>
+      </div>
 
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <label htmlFor="lesson-title" className="text-sm font-medium">
-                        Lesson Title
-                      </label>
-                      <Input
-                        id="lesson-title"
-                        value={lessonTitle}
-                        onChange={(e) => setLessonTitle(e.target.value)}
-                        placeholder="Enter lesson title"
-                      />
-                    </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-4">
+          <CardTitle className="text-md">Lessons ({module.lessons.length})</CardTitle>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setQuizDialogOpen(true)}>
+              Manage Quizzes
+            </Button>
+            <Button size="sm" onClick={handleAddLesson}>
+              <Plus className="h-4 w-4 mr-1" /> Add Lesson
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {module.lessons.length === 0 ? (
+            <div className="text-center py-8 border rounded-md bg-muted/20">
+              <p className="text-muted-foreground">No lessons have been added to this module yet.</p>
+              <Button variant="outline" className="mt-4" onClick={handleAddLesson}>
+                <Plus className="h-4 w-4 mr-1" /> Add Your First Lesson
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Accordion type="multiple" className="w-full">
+                {module.lessons.map((lesson, index) => (
+                  <AccordionItem key={lesson.id} value={lesson.id} className="border rounded-md mb-2">
+                    <div className="flex items-center px-4 py-2">
+                      <div className="w-6 flex justify-center">
+                        {lesson.type === "text" && <FileText className="h-4 w-4 text-muted-foreground" />}
+                        {lesson.type === "video" && <Video className="h-4 w-4 text-muted-foreground" />}
+                        {lesson.type === "image" && <FileImage className="h-4 w-4 text-muted-foreground" />}
+                        {(lesson.type === "file" || lesson.type === "html") && <File className="h-4 w-4 text-muted-foreground" />}
+                        {lesson.type === "iframe" && <LinkIcon className="h-4 w-4 text-muted-foreground" />}
+                        {lesson.type === "quiz" && <RefreshCw className="h-4 w-4 text-muted-foreground" />}
+                      </div>
 
-                    <div className="space-y-2">
-                      <label htmlFor="lesson-duration" className="text-sm font-medium">
-                        Duration (e.g. "5 min", "PDF", etc.)
-                      </label>
-                      <Input
-                        id="lesson-duration"
-                        value={lessonDuration}
-                        onChange={(e) => setLessonDuration(e.target.value)}
-                        placeholder="Enter duration"
-                      />
-                    </div>
+                      <AccordionTrigger className="flex-1 py-0">
+                        <span className="text-left">{lesson.title || "Untitled Lesson"}</span>
+                      </AccordionTrigger>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Content Type</label>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant={lessonType === "text" ? "default" : "outline"}
-                          onClick={() => setLessonType("text")}
-                          className="flex-1"
+                      <div className="text-xs text-muted-foreground pr-2">
+                        {lesson.duration}
+                      </div>
+                      
+                      <div className="flex gap-1 ml-4">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveLesson(index, "up");
+                          }}
+                          disabled={index === 0}
                         >
-                          <FileText className="h-4 w-4 mr-2" />
-                          Text
+                          <MoveUp className="h-4 w-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          variant={lessonType === "html" ? "default" : "outline"}
-                          onClick={() => setLessonType("html")}
-                          className="flex-1"
-                          disabled={!hasPermission("embed_html")}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveLesson(index, "down");
+                          }}
+                          disabled={index === module.lessons.length - 1}
                         >
-                          <Code className="h-4 w-4 mr-2" />
-                          HTML
+                          <MoveDown className="h-4 w-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          variant={lessonType === "iframe" ? "default" : "outline"}
-                          onClick={() => setLessonType("iframe")}
-                          className="flex-1"
-                          disabled={!hasPermission("embed_iframe")}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditLesson(lesson, index);
+                          }}
                         >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          iFrame
+                          <FileText className="h-4 w-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          variant={lessonType === "video" ? "default" : "outline"}
-                          onClick={() => setLessonType("video")}
-                          className="flex-1"
-                          disabled={!hasPermission("embed_video")}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteLesson(index);
+                          }}
                         >
-                          <Video className="h-4 w-4 mr-2" />
-                          Video
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-
-                    {/* Content editors based on selected content type */}
-                    {lessonType === "text" && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Text Content</label>
-                        <Tabs value={activeTab} onValueChange={setActiveTab}>
-                          <TabsList>
-                            <TabsTrigger value="editor">Visual Editor</TabsTrigger>
-                            <TabsTrigger 
-                              value="html" 
-                              disabled={!hasPermission("advanced_text_editing")}
-                            >
-                              HTML Editor
-                            </TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="editor">
-                            <RichTextEditor
-                              initialValue={lessonContent}
-                              onChange={setLessonContent}
-                              placeholder="Enter lesson content here..."
-                            />
-                          </TabsContent>
-                          <TabsContent value="html">
-                            <Textarea
-                              value={lessonContent}
-                              onChange={(e) => setLessonContent(e.target.value)}
-                              placeholder="Enter HTML content here..."
-                              className="min-h-[200px] font-mono text-sm"
-                            />
-                          </TabsContent>
-                        </Tabs>
-                      </div>
-                    )}
-
-                    {lessonType === "html" && (
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">HTML Content</label>
-                        <Textarea
-                          value={htmlContent}
-                          onChange={(e) => setHtmlContent(e.target.value)}
-                          placeholder="Enter HTML content here..."
-                          className="min-h-[200px] font-mono text-sm"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Add raw HTML that will be rendered in the lesson.
-                          Note: Scripts will be sanitized for security.
-                        </p>
-                      </div>
-                    )}
-
-                    {lessonType === "iframe" && (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">iFrame URL</label>
-                          <Input
-                            value={iframeUrl}
-                            onChange={(e) => setIframeUrl(e.target.value)}
-                            placeholder="https://example.com/embed"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Width</label>
-                            <Input
-                              value={iframeWidth}
-                              onChange={(e) => setIframeWidth(e.target.value)}
-                              placeholder="100% or pixel value"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Height</label>
-                            <Input
-                              value={iframeHeight}
-                              onChange={(e) => setIframeHeight(e.target.value)}
-                              placeholder="400px"
-                            />
+                    <AccordionContent className="px-4 pt-0 pb-3">
+                      {lesson.type === "quiz" ? (
+                        <div className="text-sm">
+                          <p className="text-muted-foreground mb-2">{lesson.content}</p>
+                          <div className="bg-muted/20 p-2 rounded text-xs">
+                            Quiz ID: {lesson.quizId}
                           </div>
                         </div>
-                        <div className="bg-muted p-4 rounded-md">
-                          <p className="text-xs text-muted-foreground mb-2">Preview:</p>
-                          {iframeUrl && (
-                            <div className="border rounded">
-                              <iframe 
-                                src={iframeUrl} 
-                                width={iframeWidth} 
-                                height={iframeHeight}
-                                title="Iframe Preview"
-                                className="border-0"
-                                sandbox="allow-scripts allow-same-origin allow-popups"
-                              />
+                      ) : lesson.type === "text" ? (
+                        <div className="text-sm" dangerouslySetInnerHTML={{ __html: lesson.content }} />
+                      ) : (
+                        <div className="text-sm">
+                          {lesson.embedData?.url && (
+                            <div className="bg-muted/20 p-2 rounded text-xs">
+                              URL: {lesson.embedData.url}
                             </div>
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {lessonType === "video" && (
-                      <ContentEmbedder onEmbed={handleEmbedContent} />
-                    )}
-                  </div>
-
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setAddingLesson(false)}
-                    >
-                      Cancel
-                    </Button>
-                    {lessonType !== "video" && (
-                      <Button type="button" onClick={handleSaveLesson}>
-                        Add Lesson
-                      </Button>
-                    )}
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </div>
-
-          {editedModule.lessons.length > 0 ? (
-            <Accordion
-              type="single"
-              collapsible
-              value={openAccordion || undefined}
-              onValueChange={(value) => setOpenAccordion(value)}
-              className="border rounded-md"
-            >
-              {editedModule.lessons.map((lesson, index) => (
-                <AccordionItem key={lesson.id} value={lesson.id} className="border-b">
-                  <AccordionTrigger className="px-4 py-2 hover:bg-muted/50 group">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-primary/10 rounded-full p-1">
-                          {getLessonIcon(lesson.type)}
-                        </div>
-                        <span>{lesson.title}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                          {lesson.duration}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveLesson(lesson.id);
-                          }}
-                        >
-                          <Trash className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 py-2">
-                    {lesson.type === "text" && (
-                      <div
-                        className="prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: lesson.content }}
-                      />
-                    )}
-                    {lesson.type === "html" && lesson.htmlContent && (
-                      <div className="border rounded p-4 bg-muted/20">
-                        <div
-                          className="prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: lesson.htmlContent }}
-                        />
-                      </div>
-                    )}
-                    {lesson.embedData && (
-                      <div className="relative rounded border overflow-hidden">
-                        {lesson.type === "video" && (
-                          <iframe
-                            src={lesson.embedData.url}
-                            width={lesson.embedData.width}
-                            height={lesson.embedData.height}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            title={lesson.title}
-                          ></iframe>
-                        )}
-                        {lesson.type === "iframe" && (
-                          <iframe
-                            src={lesson.embedData.url}
-                            width={lesson.embedData.width}
-                            height={lesson.embedData.height}
-                            frameBorder="0"
-                            sandbox="allow-scripts allow-same-origin allow-popups"
-                            title={lesson.title}
-                          ></iframe>
-                        )}
-                        {(lesson.type === "html" || lesson.type === "file") && (
-                          <div className="p-4 bg-muted/20 flex items-center justify-center min-h-40">
-                            <div className="text-center">
-                              <File className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
-                              <p className="text-sm text-muted-foreground">
-                                {lesson.type === "html"
-                                  ? "HTML Content (preview not available)"
-                                  : "File Content (preview not available)"}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          ) : (
-            <div className="text-center py-6 border rounded-md bg-muted/20">
-              <p className="text-muted-foreground">No lessons yet. Add your first lesson.</p>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           )}
-        </div>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={onCancel}>
-            <X className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-          <Button onClick={() => onSave(editedModule)}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Module
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          {availableQuizzes.length > 0 && (
+            <div className="mt-6 border-t pt-4">
+              <h3 className="text-sm font-medium mb-2">Add Quiz to Module</h3>
+              <div className="flex gap-2 flex-wrap">
+                {availableQuizzes.map(quiz => (
+                  <Button 
+                    key={quiz.id}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAddLessonWithQuiz(quiz.id)}
+                  >
+                    {quiz.title}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSaveModule}>Save Module</Button>
+      </div>
+
+      {/* Add/Edit Lesson Dialog */}
+      <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{editingIndex !== null ? "Edit Lesson" : "Add New Lesson"}</DialogTitle>
+            <DialogDescription>
+              Fill in the details for this lesson
+            </DialogDescription>
+          </DialogHeader>
+          
+          {currentLesson && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <Label htmlFor="lesson-title">Lesson Title</Label>
+                  <Input
+                    id="lesson-title"
+                    value={currentLesson.title}
+                    onChange={(e) => setCurrentLesson({...currentLesson, title: e.target.value})}
+                    placeholder="Enter lesson title"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="lesson-type">Lesson Type</Label>
+                    <Select
+                      value={currentLesson.type}
+                      onValueChange={(value) => 
+                        setCurrentLesson({...currentLesson, type: value, content: value === 'text' ? currentLesson.content : ''})
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text">Text Content</SelectItem>
+                        <SelectItem value="video">Video</SelectItem>
+                        <SelectItem value="image">Image</SelectItem>
+                        <SelectItem value="file">File/Document</SelectItem>
+                        <SelectItem value="iframe">External Website</SelectItem>
+                        <SelectItem value="html">HTML Content</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="lesson-duration">Duration</Label>
+                    <Input
+                      id="lesson-duration"
+                      value={currentLesson.duration}
+                      onChange={(e) => setCurrentLesson({...currentLesson, duration: e.target.value})}
+                      placeholder="e.g. 10 mins, 1h 30m"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
+                {currentLesson.type === 'text' && (
+                  <div>
+                    <Label htmlFor="lesson-content">Content</Label>
+                    <Textarea
+                      id="lesson-content"
+                      value={currentLesson.content}
+                      onChange={(e) => setCurrentLesson({...currentLesson, content: e.target.value})}
+                      placeholder="Lesson content or description"
+                      className="mt-1"
+                      rows={6}
+                    />
+                  </div>
+                )}
+                
+                {currentLesson.type !== 'text' && (
+                  <ContentEmbedder
+                    contentType={currentLesson.type}
+                    initialEmbedData={currentLesson.embedData}
+                    onEmbedDataChange={(embedData) => 
+                      setCurrentLesson({...currentLesson, embedData})
+                    }
+                  />
+                )}
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLessonDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveLesson}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quizzes Management Dialog */}
+      <Dialog open={quizDialogOpen} onOpenChange={setQuizDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Quizzes</DialogTitle>
+            <DialogDescription>
+              Create and edit quizzes for this course
+            </DialogDescription>
+          </DialogHeader>
+          
+          <QuizManager 
+            courseId={courseId}
+            onSaveQuizzes={handleSaveQuizzes}
+            initialQuizzes={availableQuizzes}
+          />
+          
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 };
 

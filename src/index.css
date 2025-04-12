@@ -7,7 +7,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -17,7 +17,7 @@
     --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 221.2 83.2% 53.9%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -45,46 +45,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    
-    /* Neon effects */
-    --neon-primary: 217.2 91.2% 59.8%;
-    --neon-secondary: 280 100% 60%;
-    --neon-accent: 330 100% 60%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    
-    /* Neon effects */
-    --neon-primary: 217.2 91.2% 59.8%;
-    --neon-secondary: 280 100% 60%;
-    --neon-accent: 330 100% 60%;
   }
 }
 
@@ -118,7 +78,7 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm;
+    @apply bg-white/70 backdrop-blur-md border border-gray-200 shadow-sm;
   }
   
   .progress-bar {
@@ -129,49 +89,24 @@
     @apply h-full rounded-full animate-progress-fill;
   }
   
-  /* Neon gradient cards */
+  /* Card components */
   .course-card {
-    @apply bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 shadow-lg 
-           transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:translate-y-[-4px] 
-           hover:border-primary/30;
+    @apply bg-white border border-gray-200 rounded-xl p-6 shadow-lg 
+           transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px];
   }
   
   .stat-card {
-    @apply flex flex-col gap-1 p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm
-           transition-all duration-300 hover:shadow-md hover:shadow-primary/20 hover:border-primary/20;
-  }
-  
-  /* Neon text and border effects */
-  .neon-text-primary {
-    @apply text-primary drop-shadow-[0_0_6px_rgba(59,130,246,0.6)];
-  }
-  
-  .neon-text-secondary {
-    @apply text-purple-500 drop-shadow-[0_0_6px_rgba(168,85,247,0.6)];
-  }
-  
-  .neon-text-accent {
-    @apply text-pink-500 drop-shadow-[0_0_6px_rgba(236,72,153,0.6)];
-  }
-  
-  .neon-border {
-    @apply border border-primary/50 shadow-[0_0_10px_rgba(59,130,246,0.3)];
-  }
-  
-  .neon-border-hover:hover {
-    @apply border-primary/70 shadow-[0_0_15px_rgba(59,130,246,0.5)];
+    @apply flex flex-col gap-1 p-4 rounded-xl border border-gray-200 bg-white
+           transition-all duration-300 hover:shadow-md;
   }
   
   /* 3D card effects */
   .card-3d {
     @apply transition-all duration-300 transform;
-    transform-style: preserve-3d;
-    perspective: 1000px;
   }
   
   .card-3d:hover {
-    @apply transform-gpu;
-    transform: translateY(-5px) rotateX(5deg);
+    @apply transform-gpu -translate-y-1 shadow-lg;
   }
 
   /* Fullscreen toggle */
