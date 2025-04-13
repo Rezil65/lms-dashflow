@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, MoveUp, MoveDown, FileText, Video, FileImage, File, RefreshCw, Link as LinkIcon } from "lucide-react";
+import { Plus, Trash2, MoveUp, MoveDown, FileText, Video, FileImage, File, RefreshCw, Link as LinkIcon, BookOpen } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import ContentEmbedder from "@/components/ContentEmbedder";
 import { useToast } from "@/hooks/use-toast";
@@ -81,9 +82,25 @@ const ModuleEditor = ({
   const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(-1);
   const [quizDialogOpen, setQuizDialogOpen] = useState(false);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load quizzes from localStorage if available
+    const storedQuizzes = localStorage.getItem(`course-${courseId}-quizzes`);
+    if (storedQuizzes) {
+      try {
+        setQuizzes(JSON.parse(storedQuizzes));
+      } catch (e) {
+        console.error("Failed to parse stored quizzes:", e);
+        loadMockQuizzes();
+      }
+    } else {
+      loadMockQuizzes();
+    }
+  }, [courseId]);
+  
+  const loadMockQuizzes = () => {
     const mockQuizzes: Quiz[] = [
       {
         id: "quiz1",
@@ -99,10 +116,12 @@ const ModuleEditor = ({
       }
     ];
     setQuizzes(mockQuizzes);
-  }, [courseId]);
+  };
 
   const handleSaveQuizzes = (updatedQuizzes: Quiz[]) => {
     setQuizzes(updatedQuizzes);
+    // Store quizzes in localStorage
+    localStorage.setItem(`course-${courseId}-quizzes`, JSON.stringify(updatedQuizzes));
     toast({
       title: "Quizzes saved",
       description: "Quizzes have been saved successfully"
@@ -192,6 +211,16 @@ const ModuleEditor = ({
     onSave?.(finalModule);
   };
 
+  const handleSelectQuiz = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
+    setCurrentLesson({
+      ...currentLesson,
+      type: "quiz",
+      quiz: quiz,
+      content: `Quiz: ${quiz.title}`
+    });
+  };
+
   const getLessonTypeIcon = (type: string) => {
     switch (type) {
       case "video":
@@ -202,6 +231,10 @@ const ModuleEditor = ({
         return <File className="h-4 w-4" />;
       case "link":
         return <LinkIcon className="h-4 w-4" />;
+      case "quiz":
+        return <BookOpen className="h-4 w-4" />;
+      case "scorm":
+        return <File className="h-4 w-4 text-blue-500" />;
       default:
         return <FileText className="h-4 w-4" />;
     }
@@ -232,6 +265,16 @@ const ModuleEditor = ({
         ) : (
           <div className="text-sm text-muted-foreground mt-2">No video URL provided</div>
         );
+      case "quiz":
+        return lesson.quiz ? (
+          <div className="text-sm mt-2">
+            <p className="font-medium">Quiz: {lesson.quiz.title}</p>
+            <p className="text-muted-foreground">{lesson.quiz.description}</p>
+            <p className="text-xs text-muted-foreground mt-1">Questions: {lesson.quiz.options.length}</p>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground mt-2">No quiz selected</div>
+        );
       case "image":
         return lesson.embedData?.url ? (
           <div className="mt-2">
@@ -243,6 +286,17 @@ const ModuleEditor = ({
           </div>
         ) : (
           <div className="text-sm text-muted-foreground mt-2">No image URL provided</div>
+        );
+      case "scorm":
+        return lesson.embedData?.url ? (
+          <div className="mt-2">
+            <div className="p-2 bg-blue-50 border border-blue-100 rounded-md">
+              <p className="text-sm font-medium">SCORM Package:</p>
+              <p className="text-sm text-blue-600 truncate">{lesson.embedData.url}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground mt-2">No SCORM package uploaded</div>
         );
       case "document":
       case "link":
@@ -432,7 +486,13 @@ const ModuleEditor = ({
                 <label htmlFor="lesson-type" className="text-sm font-medium">Content Type</label>
                 <Select
                   value={currentLesson.type}
-                  onValueChange={(value) => setCurrentLesson({...currentLesson, type: value})}
+                  onValueChange={(value) => {
+                    const newLesson = {...currentLesson, type: value};
+                    if (value !== 'quiz') {
+                      newLesson.quiz = undefined;
+                    }
+                    setCurrentLesson(newLesson);
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select content type" />
@@ -443,6 +503,8 @@ const ModuleEditor = ({
                     <SelectItem value="image">Image</SelectItem>
                     <SelectItem value="document">Document</SelectItem>
                     <SelectItem value="link">Link</SelectItem>
+                    <SelectItem value="quiz">Quiz</SelectItem>
+                    <SelectItem value="scorm">SCORM Package</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -470,8 +532,44 @@ const ModuleEditor = ({
                 />
               </div>
             )}
+            
+            {currentLesson.type === 'quiz' && (
+              <div>
+                <label className="text-sm font-medium">Select Quiz</label>
+                {quizzes.length > 0 ? (
+                  <div className="space-y-2 mt-2 max-h-64 overflow-y-auto">
+                    {quizzes.map((quiz) => (
+                      <div 
+                        key={quiz.id}
+                        className={`p-2 border rounded-md hover:bg-secondary/10 transition cursor-pointer ${currentLesson.quiz?.id === quiz.id ? 'bg-secondary/10 border-primary' : ''}`}
+                        onClick={() => handleSelectQuiz(quiz)}
+                      >
+                        <div className="font-medium">{quiz.title}</div>
+                        <div className="text-sm text-muted-foreground">{quiz.description}</div>
+                        <div className="text-xs mt-1">Questions: {quiz.options.length}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">No quizzes available.</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => {
+                        setLessonDialogOpen(false);
+                        setQuizDialogOpen(true);
+                      }}
+                    >
+                      Create a Quiz
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
                 
-            {currentLesson.type !== 'text' && (
+            {(currentLesson.type !== 'text' && currentLesson.type !== 'quiz') && (
               <ContentEmbedder
                 initialEmbedData={currentLesson.embedData}
                 onEmbedDataChange={(embedData) => 

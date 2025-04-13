@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Video, FileText, File, Maximize, Minimize, CheckCircle2, BookOpen, Play, Clock } from "lucide-react";
+import { Video, FileText, File, Maximize, Minimize, CheckCircle2, BookOpen, Play, Clock, ExternalLink } from "lucide-react";
 import { Module, Lesson } from "./ModuleEditor";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
@@ -16,6 +16,7 @@ import { Quiz } from "./QuizManager";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ModuleDisplayProps {
   module: Module;
@@ -37,6 +38,7 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
     const stored = localStorage.getItem(`module-${module.id}-completed-lessons`);
     return stored ? JSON.parse(stored) : {};
   });
+  const [activeTab, setActiveTab] = useState<string>("content");
   
   const isInstructor = hasRole(["admin", "instructor"]);
 
@@ -105,6 +107,49 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
     });
   };
 
+  const renderVideoPlayer = (url: string, title: string) => {
+    // Handle different video URLs
+    let embedUrl = url;
+    
+    // YouTube
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoId = url.includes('v=') 
+        ? new URLSearchParams(url.split('?')[1]).get('v')
+        : url.split('/').pop()?.split('?')[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+    // Vimeo
+    else if (url.includes('vimeo.com')) {
+      const videoId = url.split('/').pop()?.split('?')[0];
+      embedUrl = `https://player.vimeo.com/video/${videoId}`;
+    }
+    
+    return (
+      <div className="aspect-video bg-black rounded-md overflow-hidden">
+        <iframe
+          src={embedUrl}
+          title={title}
+          className="w-full h-full"
+          allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        />
+      </div>
+    );
+  };
+
+  const renderIframeViewer = (url: string, title: string) => {
+    return (
+      <div className="h-[600px] bg-white border rounded-md overflow-hidden">
+        <iframe
+          src={url}
+          title={title}
+          className="w-full h-full"
+          allowFullScreen
+        />
+      </div>
+    );
+  };
+
   return (
     <Card className="mb-6 transition-all duration-300 hover:shadow-md border-primary/10 overflow-hidden">
       <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-secondary/5">
@@ -134,153 +179,258 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        <div>
-          {module.lessons && module.lessons.length > 0 ? (
-            <Accordion
-              type="single"
-              collapsible
-              value={openLesson || undefined}
-              onValueChange={(value) => setOpenLesson(value)}
-              className="border rounded-md overflow-hidden bg-white"
-            >
-              {module.lessons.map((lesson) => (
-                <AccordionItem key={lesson.id} value={lesson.id} className="border-b">
-                  <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center justify-between w-full pr-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`rounded-full p-2 ${completedLessons[lesson.id] ? 'bg-green-100' : 'bg-primary/10'}`}>
-                          {completedLessons[lesson.id] ? 
-                            <CheckCircle2 className="h-4 w-4 text-green-600" /> : 
-                            getLessonIcon(lesson.type)}
-                        </div>
-                        <div>
-                          <span className="font-medium">{lesson.title}</span>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <Badge variant="outline" className="capitalize text-xs bg-secondary/10 font-normal">
-                              {lesson.type}
-                            </Badge>
-                            <span className="text-xs flex items-center text-muted-foreground">
-                              <Clock className="h-3 w-3 mr-1 inline" />
-                              {lesson.duration}
-                            </span>
+        <Tabs defaultValue="content" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4 w-full justify-start">
+            <TabsTrigger value="content" className="flex gap-1 items-center">
+              <FileText className="h-4 w-4" />
+              <span>Contents</span>
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="flex gap-1 items-center">
+              <File className="h-4 w-4" />
+              <span>Resources</span>
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="flex gap-1 items-center">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Progress</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="content" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <div>
+              {module.lessons && module.lessons.length > 0 ? (
+                <Accordion
+                  type="single"
+                  collapsible
+                  value={openLesson || undefined}
+                  onValueChange={(value) => setOpenLesson(value)}
+                  className="border rounded-md overflow-hidden bg-white"
+                >
+                  {module.lessons.map((lesson) => (
+                    <AccordionItem key={lesson.id} value={lesson.id} className="border-b">
+                      <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`rounded-full p-2 ${completedLessons[lesson.id] ? 'bg-green-100' : 'bg-primary/10'}`}>
+                              {completedLessons[lesson.id] ? 
+                                <CheckCircle2 className="h-4 w-4 text-green-600" /> : 
+                                getLessonIcon(lesson.type)}
+                            </div>
+                            <div>
+                              <span className="font-medium">{lesson.title}</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <Badge variant="outline" className="capitalize text-xs bg-secondary/10 font-normal">
+                                  {lesson.type}
+                                </Badge>
+                                <span className="text-xs flex items-center text-muted-foreground">
+                                  <Clock className="h-3 w-3 mr-1 inline" />
+                                  {lesson.duration}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 py-3 bg-secondary/5">
-                    {lesson.type === "text" && (
-                      <div className="relative">
-                        <div className="flex justify-between mb-3">
-                          <Button 
-                            onClick={(e) => toggleLessonCompletion(lesson.id, e)}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs bg-white hover:bg-muted/30 transition-colors"
-                          >
-                            {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
-                          </Button>
-                          <Button 
-                            onClick={() => toggleFullscreen(lesson)}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs bg-white hover:bg-muted/30 transition-colors"
-                          >
-                            <Maximize size={12} className="inline mr-1" /> View Fullscreen
-                          </Button>
-                        </div>
-                        <div
-                          className="prose prose-sm max-w-none bg-white p-4 rounded-md border"
-                          dangerouslySetInnerHTML={{ __html: lesson.content }}
-                        />
-                      </div>
-                    )}
-                    
-                    {lesson.type === "quiz" && lesson.quiz && (
-                      <div className="relative">
-                        <div className="flex justify-between mb-3">
-                          <h3 className="font-medium">{lesson.quiz.title}</h3>
-                          <Button 
-                            onClick={() => toggleFullscreen(lesson)}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs bg-white hover:bg-muted/30 transition-colors"
-                          >
-                            <Maximize size={12} className="inline mr-1" /> View Fullscreen
-                          </Button>
-                        </div>
-                        <div className="bg-white p-4 rounded-md border">
-                          <QuizTaker 
-                            quiz={lesson.quiz} 
-                            onComplete={(score, total) => handleQuizComplete(lesson.id, score, total)} 
-                          />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {lesson.embedData && (
-                      <div className="relative">
-                        <div className="flex justify-between mb-3">
-                          <Button 
-                            onClick={(e) => toggleLessonCompletion(lesson.id, e)}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs bg-white hover:bg-muted/30 transition-colors"
-                          >
-                            {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
-                          </Button>
-                          <Button 
-                            onClick={() => toggleFullscreen(lesson)}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs bg-white hover:bg-muted/30 transition-colors"
-                          >
-                            <Maximize size={12} className="inline mr-1" /> View Fullscreen
-                          </Button>
-                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 py-3 bg-secondary/5">
+                        {lesson.type === "text" && (
+                          <div className="relative">
+                            <div className="flex justify-between mb-3">
+                              <Button 
+                                onClick={(e) => toggleLessonCompletion(lesson.id, e)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                              >
+                                {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
+                              </Button>
+                              <Button 
+                                onClick={() => toggleFullscreen(lesson)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                              >
+                                <Maximize size={12} className="inline mr-1" /> View Fullscreen
+                              </Button>
+                            </div>
+                            <div
+                              className="prose prose-sm max-w-none bg-white p-4 rounded-md border"
+                              dangerouslySetInnerHTML={{ __html: lesson.content }}
+                            />
+                          </div>
+                        )}
                         
-                        <div className="rounded-md overflow-hidden border bg-black">
-                          {lesson.type === "video" && (
-                            <iframe
-                              src={lesson.embedData.url}
-                              width={lesson.embedData.width || "100%"}
-                              height={lesson.embedData.height || "400px"}
-                              frameBorder="0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            ></iframe>
-                          )}
-                          
-                          {lesson.type === "iframe" && (
-                            <iframe
-                              src={lesson.embedData.url}
-                              width={lesson.embedData.width || "100%"}
-                              height={lesson.embedData.height || "400px"}
-                              frameBorder="0"
-                            ></iframe>
-                          )}
-                          
-                          {(lesson.type === "html" || lesson.type === "file") && lesson.embedData.url && (
-                            <iframe
-                              src={lesson.embedData.url}
-                              width={lesson.embedData.width || "100%"}
-                              height={lesson.embedData.height || "400px"}
-                              frameBorder="0"
-                            ></iframe>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          ) : (
-            <div className="text-center py-6 border rounded-md bg-muted/20">
-              <p className="text-muted-foreground">No lessons in this module.</p>
+                        {lesson.type === "quiz" && lesson.quiz && (
+                          <div className="relative">
+                            <div className="flex justify-between mb-3">
+                              <h3 className="font-medium">{lesson.quiz.title}</h3>
+                              <Button 
+                                onClick={() => toggleFullscreen(lesson)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                              >
+                                <Maximize size={12} className="inline mr-1" /> View Fullscreen
+                              </Button>
+                            </div>
+                            <div className="bg-white p-4 rounded-md border">
+                              <QuizTaker 
+                                quiz={lesson.quiz} 
+                                onComplete={(score, total) => handleQuizComplete(lesson.id, score, total)} 
+                              />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {lesson.type === "video" && lesson.embedData?.url && (
+                          <div className="relative">
+                            <div className="flex justify-between mb-3">
+                              <Button 
+                                onClick={(e) => toggleLessonCompletion(lesson.id, e)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                              >
+                                {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
+                              </Button>
+                              <Button 
+                                onClick={() => toggleFullscreen(lesson)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                              >
+                                <Maximize size={12} className="inline mr-1" /> View Fullscreen
+                              </Button>
+                            </div>
+                            {renderVideoPlayer(lesson.embedData.url, lesson.title)}
+                          </div>
+                        )}
+                        
+                        {((lesson.type === "document" || lesson.type === "link" || lesson.type === "scorm" || lesson.type === "iframe") && lesson.embedData?.url) && (
+                          <div className="relative">
+                            <div className="flex justify-between mb-3">
+                              <Button 
+                                onClick={(e) => toggleLessonCompletion(lesson.id, e)}
+                                size="sm"
+                                variant="outline"
+                                className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                              >
+                                {completedLessons[lesson.id] ? "Mark as Incomplete" : "Mark as Complete"}
+                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  as="a"
+                                  href={lesson.embedData.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                                >
+                                  <ExternalLink size={12} className="inline mr-1" /> Open in New Tab
+                                </Button>
+                                <Button 
+                                  onClick={() => toggleFullscreen(lesson)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                                >
+                                  <Maximize size={12} className="inline mr-1" /> Fullscreen
+                                </Button>
+                              </div>
+                            </div>
+                            {renderIframeViewer(lesson.embedData.url, lesson.title)}
+                          </div>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <div className="text-center py-6 border rounded-md bg-muted/20">
+                  <p className="text-muted-foreground">No lessons in this module.</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="resources" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <div className="border rounded-md overflow-hidden bg-white p-4">
+              <h3 className="font-medium mb-4">Module Resources</h3>
+              {module.lessons?.filter(lesson => 
+                ["document", "link", "image"].includes(lesson.type) && lesson.embedData?.url
+              ).length > 0 ? (
+                <div className="space-y-2">
+                  {module.lessons
+                    .filter(lesson => ["document", "link", "image"].includes(lesson.type) && lesson.embedData?.url)
+                    .map((lesson) => (
+                      <div key={lesson.id} className="p-3 border rounded-md hover:bg-muted/10 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {getLessonIcon(lesson.type)}
+                          <div>
+                            <div className="font-medium">{lesson.title}</div>
+                            <div className="text-xs text-muted-foreground">{lesson.type}</div>
+                          </div>
+                        </div>
+                        <Button 
+                          as="a"
+                          href={lesson.embedData?.url}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          size="sm"
+                          variant="outline"
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    ))
+                  }
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No resources available for this module.</p>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="progress" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
+            <div className="border rounded-md overflow-hidden bg-white p-4">
+              <div className="mb-6">
+                <h3 className="font-medium">Your Progress</h3>
+                <div className="flex items-center gap-2 mt-2">
+                  <Progress value={completionPercentage} className="h-2 flex-1" />
+                  <span className="text-sm font-medium">{Math.round(completionPercentage)}%</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {Object.values(completedLessons).filter(Boolean).length} of {module.lessons?.length || 0} lessons completed
+                </p>
+              </div>
+
+              <h4 className="font-medium text-sm mb-2">Lesson Status:</h4>
+              <div className="space-y-1 max-h-64 overflow-y-auto">
+                {module.lessons?.map((lesson) => (
+                  <div key={lesson.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                    <div className="flex items-center gap-2">
+                      {completedLessons[lesson.id] ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <div className="h-4 w-4 border rounded-full" />
+                      )}
+                      <span className={`text-sm ${completedLessons[lesson.id] ? 'text-muted-foreground line-through' : ''}`}>
+                        {lesson.title}
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 px-2"
+                      onClick={() => toggleLessonCompletion(lesson.id)}
+                    >
+                      {completedLessons[lesson.id] ? "Mark Incomplete" : "Mark Complete"}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
       
       {/* Fullscreen content modal */}
@@ -310,23 +460,18 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
             )}
             
             {fullscreenContent.contentType === "video" && fullscreenContent.url && (
-              <div className="aspect-video w-full">
-                <iframe
-                  src={fullscreenContent.url}
-                  width="100%"
-                  height="100%"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+              <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+                {renderVideoPlayer(fullscreenContent.url, fullscreenContent.title || "")}
               </div>
             )}
             
             {(fullscreenContent.contentType === "iframe" || 
-              fullscreenContent.contentType === "html" || 
+              fullscreenContent.contentType === "document" || 
+              fullscreenContent.contentType === "link" || 
+              fullscreenContent.contentType === "scorm" ||
               fullscreenContent.contentType === "file") && 
               fullscreenContent.url && (
-              <div className="aspect-video w-full">
+              <div className="aspect-video w-full h-[80vh] rounded-lg overflow-hidden border bg-white">
                 <iframe
                   src={fullscreenContent.url}
                   width="100%"

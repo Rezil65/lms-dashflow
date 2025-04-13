@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, X, Award, Clock, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Quiz } from "./QuizManager";
+import { toast } from "@/components/ui/use-toast";
 
 interface QuizTakerProps {
   quiz: Quiz;
@@ -88,6 +89,12 @@ const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
     const calculatedScore = Math.round((correctAnswers / totalCorrectOptions) * 100);
     setScore(calculatedScore);
     setQuizSubmitted(true);
+    
+    toast({
+      title: "Quiz Submitted",
+      description: `You scored ${calculatedScore}%`,
+    });
+    
     onComplete(calculatedScore, 100);
   };
 
@@ -117,8 +124,9 @@ const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
             )}
           </div>
 
-          <div className="bg-white/5 p-4 rounded-md">
-            <h3 className="font-medium mb-4">{quiz.description || "Select the correct answer(s):"}</h3>
+          <div className={`p-4 rounded-md ${darkMode ? 'bg-white/10' : 'bg-white/5 border'}`}>
+            <h3 className="font-medium mb-4">{quiz.title || "Select the correct answer(s):"}</h3>
+            <p className="mb-4 text-sm">{quiz.description}</p>
             
             {quiz.type === 'single-choice' ? (
               <RadioGroup 
@@ -127,7 +135,10 @@ const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
                 className="space-y-2"
               >
                 {quiz.options.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/20 transition-all cursor-pointer">
+                  <div 
+                    key={option.id} 
+                    className={`flex items-center space-x-2 p-3 rounded-md ${darkMode ? 'hover:bg-white/10' : 'hover:bg-muted/20'} transition-all cursor-pointer`}
+                  >
                     <RadioGroupItem 
                       value={option.id} 
                       id={option.id} 
@@ -145,7 +156,11 @@ const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
             ) : (
               <div className="space-y-2">
                 {quiz.options.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-50 transition-all cursor-pointer">
+                  <div 
+                    key={option.id} 
+                    className={`flex items-center space-x-2 p-3 rounded-md ${darkMode ? 'hover:bg-white/10' : 'hover:bg-slate-50'} transition-all cursor-pointer`}
+                    onClick={() => handleAnswerChange(option.id)}
+                  >
                     <Checkbox 
                       id={option.id} 
                       checked={selectedAnswers.includes(option.id)} 
@@ -201,7 +216,7 @@ const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
               {quiz.options.map((option) => (
                 <div 
                   key={option.id} 
-                  className={`p-2 rounded-md flex items-center ${
+                  className={`p-3 rounded-md flex items-center ${
                     option.isCorrect ? 'bg-green-50 border border-green-100' : 
                     selectedAnswers.includes(option.id) ? 'bg-red-50 border border-red-100' : 'border'
                   }`}
