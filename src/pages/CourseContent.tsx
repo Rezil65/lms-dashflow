@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Upload, Video, FileText, MinusCircle, PlusCircle } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -97,6 +98,11 @@ const CourseContent = () => {
     } else {
       setModules(defaultModules);
     }
+
+    // Load saved quizzes
+    const quizzesKey = `course-${courseId}-quizzes`;
+    const savedQuizzes = JSON.parse(localStorage.getItem(quizzesKey) || "[]");
+    setQuizzes(savedQuizzes);
   }, [courseId]);
   
   const handleUpdateCourseInfo = () => {
@@ -169,13 +175,13 @@ const CourseContent = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary/10">
       <Header />
       
-      <div className="border-b bg-white">
+      <div className="border-b bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2">
-            <Link to={`/course/${id}`} className="text-muted-foreground hover:text-foreground">
+            <Link to={`/course/${id}`} className="text-muted-foreground hover:text-foreground transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <h1 className="text-lg font-semibold">Course Content</h1>
@@ -184,9 +190,9 @@ const CourseContent = () => {
       </div>
       
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-border overflow-hidden mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden mb-6">
               {editingCourseInfo ? (
                 <div className="p-6 space-y-4">
                   <div className="space-y-2">
@@ -234,7 +240,7 @@ const CourseContent = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h1 className="text-2xl font-display font-semibold mb-2">
+                      <h1 className="text-3xl font-display font-semibold mb-2 text-primary-900">
                         {courseTitle || "Blockchain Technology"}
                       </h1>
                       
@@ -249,7 +255,7 @@ const CourseContent = () => {
                         <Button variant="outline" onClick={() => setEditingCourseInfo(true)}>
                           Edit Course Info
                         </Button>
-                        <Button>
+                        <Button className="bg-primary hover:bg-primary/90">
                           <Upload className="h-4 w-4 mr-2" />
                           Upload Content
                         </Button>
@@ -258,42 +264,44 @@ const CourseContent = () => {
                   </div>
                   
                   <Tabs defaultValue="content" className="w-full">
-                    <TabsList className="mb-4">
-                      <TabsTrigger value="content">Course Content</TabsTrigger>
-                      <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
-                      {canEdit && <TabsTrigger value="resources">Resources</TabsTrigger>}
-                      <TabsTrigger value="notes">My Notes</TabsTrigger>
+                    <TabsList className="mb-4 w-full bg-muted/50 p-1 rounded-lg">
+                      <TabsTrigger value="content" className="text-sm font-medium">Course Content</TabsTrigger>
+                      <TabsTrigger value="quizzes" className="text-sm font-medium">Quizzes</TabsTrigger>
+                      {canEdit && <TabsTrigger value="resources" className="text-sm font-medium">Resources</TabsTrigger>}
+                      <TabsTrigger value="notes" className="text-sm font-medium">My Notes</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="content" className="space-y-4">
+                    <TabsContent value="content" className="space-y-6 animate-fade-in">
                       {canEdit && (
                         <div className="mb-4">
-                          <Button onClick={handleAddModule}>
+                          <Button onClick={handleAddModule} className="bg-primary hover:bg-primary/90">
                             <Plus className="h-4 w-4 mr-2" />
                             Add Module
                           </Button>
                         </div>
                       )}
                       
-                      {modules.map((module) => (
-                        editingModuleId === module.id ? (
-                          <ModuleEditor 
-                            key={module.id}
-                            initialModule={module}
-                            onSave={handleSaveModule}
-                            courseId={courseId}
-                          />
-                        ) : (
-                          <ModuleDisplay 
-                            key={module.id}
-                            module={module}
-                            onEdit={() => canEdit && setEditingModuleId(module.id)}
-                          />
-                        )
-                      ))}
+                      <div className="space-y-8">
+                        {modules.map((module) => (
+                          editingModuleId === module.id ? (
+                            <ModuleEditor 
+                              key={module.id}
+                              initialModule={module}
+                              onSave={handleSaveModule}
+                              courseId={courseId}
+                            />
+                          ) : (
+                            <ModuleDisplay 
+                              key={module.id}
+                              module={module}
+                              onEdit={() => canEdit && setEditingModuleId(module.id)}
+                            />
+                          )
+                        ))}
+                      </div>
                     </TabsContent>
                     
-                    <TabsContent value="quizzes">
+                    <TabsContent value="quizzes" className="animate-fade-in">
                       {canEdit ? (
                         <QuizManager 
                           courseId={courseId} 
@@ -301,16 +309,17 @@ const CourseContent = () => {
                           initialQuizzes={quizzes}
                         />
                       ) : (
-                        <div className="text-center py-8">
-                          <p className="text-muted-foreground">Quizzes are now integrated within the modules.</p>
-                          <p className="text-sm text-muted-foreground mt-2">Navigate to the modules to take quizzes.</p>
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 text-center">
+                          <h3 className="text-lg font-medium mb-2">Interactive Learning</h3>
+                          <p className="text-muted-foreground mb-4">Quizzes are now integrated within the course modules for a better learning experience.</p>
+                          <p className="text-sm text-primary">Navigate to the modules above to access and take the quizzes.</p>
                         </div>
                       )}
                     </TabsContent>
 
                     {canEdit && (
-                      <TabsContent value="resources">
-                        <div className="border rounded-lg p-6">
+                      <TabsContent value="resources" className="animate-fade-in">
+                        <div className="border rounded-lg p-6 bg-white shadow-sm">
                           <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-medium">Course Resources</h3>
                             <ResourceUploader 
@@ -324,10 +333,10 @@ const CourseContent = () => {
                               {resources.map((resource) => (
                                 <li 
                                   key={resource.id} 
-                                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md border"
+                                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md border transition-colors"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <Badge variant="outline">{resource.type.split('/')[0]}</Badge>
+                                    <Badge variant="outline" className="bg-blue-50">{resource.type.split('/')[0]}</Badge>
                                     <span className="text-blue-600 hover:underline cursor-pointer">
                                       {resource.name}
                                     </span>
@@ -356,7 +365,7 @@ const CourseContent = () => {
                       </TabsContent>
                     )}
 
-                    <TabsContent value="notes">
+                    <TabsContent value="notes" className="animate-fade-in">
                       <NotesManager courseId={parseInt(courseId)} />
                     </TabsContent>
                   </Tabs>
@@ -367,18 +376,18 @@ const CourseContent = () => {
           
           <div>
             <div className="flex justify-between items-center mb-2">
-              <h2 className="text-lg font-semibold">Your Progress</h2>
+              <h2 className="text-lg font-semibold text-primary-900">Your Progress</h2>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={toggleProgressCard} 
-                className="h-8 w-8 p-0 rounded-full"
+                className="h-8 w-8 p-0 rounded-full hover:bg-primary/10"
               >
                 {showProgressCard ? <MinusCircle className="h-4 w-4" /> : <PlusCircle className="h-4 w-4" />}
               </Button>
             </div>
             {showProgressCard && (
-              <Card className="sticky top-4">
+              <Card className="sticky top-4 shadow-md border-primary/10 overflow-hidden bg-white/80 backdrop-blur-sm">
                 <CardContent className="p-6">
                   <div className="mb-6">
                     <div className="flex justify-between mb-2">
@@ -390,10 +399,10 @@ const CourseContent = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium mb-2">Continue Learning</h3>
-                      <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <h3 className="text-sm font-medium mb-2 text-primary-900">Continue Learning</h3>
+                      <div className="border rounded-lg p-3 hover:bg-primary/5 transition-colors cursor-pointer">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="bg-blue-100 text-blue-600 rounded-full p-1">
+                          <div className="bg-blue-100 text-blue-600 rounded-full p-1.5">
                             <Video className="h-4 w-4" />
                           </div>
                           <span className="font-medium">Advanced Techniques</span>
@@ -401,14 +410,17 @@ const CourseContent = () => {
                         <div className="text-xs text-muted-foreground">
                           Module 2 • 18 minutes
                         </div>
+                        <div className="mt-2">
+                          <Progress value={65} className="h-1.5" />
+                        </div>
                       </div>
                     </div>
                     
                     <div>
-                      <h3 className="text-sm font-medium mb-2">Next Up</h3>
-                      <div className="border rounded-lg p-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <h3 className="text-sm font-medium mb-2 text-primary-900">Next Up</h3>
+                      <div className="border rounded-lg p-3 hover:bg-primary/5 transition-colors cursor-pointer">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="bg-gray-100 text-gray-600 rounded-full p-1">
+                          <div className="bg-gray-100 text-gray-600 rounded-full p-1.5">
                             <FileText className="h-4 w-4" />
                           </div>
                           <span className="font-medium">Project Documentation</span>
@@ -419,7 +431,7 @@ const CourseContent = () => {
                       </div>
                     </div>
                     
-                    <Button className="w-full">Resume Course</Button>
+                    <Button className="w-full bg-primary hover:bg-primary/90">Resume Course</Button>
                   </div>
                 </CardContent>
               </Card>

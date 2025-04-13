@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, CheckCircle2, Clock, Award, X } from "lucide-react";
+import { ChevronRight, CheckCircle2, Clock, Award, X, BookOpen, BrainCircuit } from "lucide-react";
 import { Quiz } from "./QuizManager";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "./ui/progress";
@@ -43,7 +43,7 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
       setLoading(true);
       
       // Check localStorage first for any quizzes
-      const storedQuizzes = localStorage.getItem('quizzes');
+      const storedQuizzes = localStorage.getItem(`course-${courseId}-quizzes`) || localStorage.getItem('quizzes');
       let availableQuizzes: Quiz[] = [];
       
       if (storedQuizzes) {
@@ -178,7 +178,7 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Available Quizzes</h3>
+        <h3 className="text-lg font-semibold">Available Quizzes</h3>
         {isPreview && (
           <Button variant="ghost" size="sm" className="text-sm" onClick={() => navigate('/learner?tab=quizzes')}>
             View All <ChevronRight className="ml-1 h-4 w-4" />
@@ -194,33 +194,45 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
       ) : quizzes.length > 0 ? (
         <div className="space-y-3">
           {quizzes.map((quiz) => (
-            <Card key={quiz.id} className={`hover:shadow-md transition-shadow ${isQuizCompleted(quiz.id) ? 'border-green-200' : ''}`}>
+            <Card 
+              key={quiz.id} 
+              className={`hover:shadow-md transition-all ${isQuizCompleted(quiz.id) ? 'border-green-200 bg-green-50/30' : ''}`}
+            >
               <CardContent className="p-4">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-md">{quiz.title}</h4>
-                      <Badge variant="outline" className="ml-auto capitalize">
-                        {quiz.type === 'multiple-choice' ? 'Multiple Choice' : 'Single Choice'}
-                      </Badge>
-                      {isQuizCompleted(quiz.id) && (
-                        <Badge variant="default" className="bg-green-500">
-                          <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
-                        </Badge>
-                      )}
+                      <div className={`p-2 rounded-full ${isQuizCompleted(quiz.id) ? 'bg-green-100' : 'bg-primary/10'}`}>
+                        {isQuizCompleted(quiz.id) ? 
+                          <CheckCircle2 className="h-4 w-4 text-green-600" /> : 
+                          <BrainCircuit className="h-4 w-4 text-primary" />}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-md">{quiz.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="capitalize bg-secondary/10">
+                            {quiz.type === 'multiple-choice' ? 'Multiple Choice' : 'Single Choice'}
+                          </Badge>
+                          {isQuizCompleted(quiz.id) && (
+                            <Badge variant="default" className="bg-green-500">
+                              <CheckCircle2 className="h-3 w-3 mr-1" /> Completed
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                       {quiz.description}
                     </p>
                     <div className="flex items-center mt-3 justify-between">
                       <div className="flex items-center text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
-                        {quiz.options.length} questions
+                        {quiz.options.length} questions • Est. {quiz.options.length} min
                       </div>
                       <Button 
                         variant={isQuizCompleted(quiz.id) ? "outline" : "default"}
                         size="sm"
-                        className="h-7 text-xs"
+                        className="h-8 text-xs"
                         onClick={() => handleTakeQuiz(quiz)}
                       >
                         {isQuizCompleted(quiz.id) ? 'Retake Quiz' : 'Take Quiz'}
@@ -233,13 +245,14 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-8 border rounded-md bg-gray-50">
+        <div className="text-center py-8 border rounded-md bg-muted/20">
+          <BookOpen className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
           <p className="text-muted-foreground">No quizzes available</p>
         </div>
       )}
       
       <Dialog open={quizDialogOpen} onOpenChange={setQuizDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{activeQuiz?.title}</DialogTitle>
             <DialogDescription>
@@ -256,9 +269,9 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
                     onValueChange={(value) => setSelectedAnswers([value])}
                   >
                     {activeQuiz?.options.map((option) => (
-                      <div key={option.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-50">
-                        <RadioGroupItem value={option.id} id={option.id} />
-                        <Label htmlFor={option.id} className="flex-1 cursor-pointer">
+                      <div key={option.id} className="flex items-center space-x-2 p-3 rounded-md hover:bg-muted/20 transition-all">
+                        <RadioGroupItem value={option.id} id={`radio-${option.id}`} />
+                        <Label htmlFor={`radio-${option.id}`} className="flex-1 cursor-pointer">
                           {option.text}
                         </Label>
                       </div>
@@ -267,13 +280,13 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
                 ) : (
                   <div className="space-y-2">
                     {activeQuiz?.options.map((option) => (
-                      <div key={option.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-50">
+                      <div key={option.id} className="flex items-center space-x-2 p-3 rounded-md hover:bg-muted/20 transition-all">
                         <Checkbox 
-                          id={option.id} 
+                          id={`checkbox-${option.id}`} 
                           checked={selectedAnswers.includes(option.id)} 
                           onCheckedChange={() => handleAnswerChange(option.id)}
                         />
-                        <Label htmlFor={option.id} className="flex-1 cursor-pointer">
+                        <Label htmlFor={`checkbox-${option.id}`} className="flex-1 cursor-pointer">
                           {option.text}
                         </Label>
                       </div>
@@ -284,20 +297,23 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
             ) : (
               <div className="space-y-6">
                 <div className="text-center">
-                  <div className="mb-2">Your score</div>
-                  <div className="text-3xl font-bold">{score}%</div>
-                  <div className="mt-3">
-                    {score >= 70 ? (
-                      <div className="flex items-center justify-center text-green-600">
-                        <Award className="h-5 w-5 mr-2" />
-                        <span>Congratulations! You passed the quiz.</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center text-amber-600">
-                        <X className="h-5 w-5 mr-2" />
-                        <span>Try again to improve your score.</span>
-                      </div>
-                    )}
+                  <div className={`p-6 mb-4 rounded-lg ${score >= 70 ? 'bg-green-50' : 'bg-amber-50'}`}>
+                    <div className="mb-2">Your score</div>
+                    <div className="text-3xl font-bold mb-2">{score}%</div>
+                    <Progress value={score} className="h-2 mb-4" />
+                    <div className="mt-3">
+                      {score >= 70 ? (
+                        <div className="flex items-center justify-center text-green-600">
+                          <Award className="h-5 w-5 mr-2" />
+                          <span>Congratulations! You passed the quiz.</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center text-amber-600">
+                          <X className="h-5 w-5 mr-2" />
+                          <span>Try again to improve your score.</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -306,16 +322,16 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
                   {activeQuiz?.options.map((option) => (
                     <div 
                       key={option.id} 
-                      className={`p-2 rounded-md flex items-center ${
-                        option.isCorrect ? 'bg-green-50 text-green-800' : 
-                        selectedAnswers.includes(option.id) ? 'bg-red-50 text-red-800' : ''
+                      className={`p-3 rounded-md flex items-center ${
+                        option.isCorrect ? 'bg-green-50 border border-green-100' : 
+                        selectedAnswers.includes(option.id) ? 'bg-red-50 border border-red-100' : 'border'
                       }`}
                     >
                       {option.isCorrect ? (
-                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-600 flex-shrink-0" />
                       ) : (
                         selectedAnswers.includes(option.id) && (
-                          <X className="h-4 w-4 mr-2 text-red-600" />
+                          <X className="h-4 w-4 mr-2 text-red-600 flex-shrink-0" />
                         )
                       )}
                       <span>{option.text}</span>
@@ -331,11 +347,23 @@ const Quizzes = ({ isPreview = false, courseId }: QuizzesProps) => {
               <Button 
                 onClick={handleSubmitQuiz} 
                 disabled={selectedAnswers.length === 0}
+                className="bg-primary hover:bg-primary/90"
               >
                 Submit Answers
               </Button>
             ) : (
-              <Button onClick={() => setQuizDialogOpen(false)}>Close</Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    setQuizSubmitted(false);
+                    setSelectedAnswers([]);
+                  }} 
+                  variant="outline"
+                >
+                  Try Again
+                </Button>
+                <Button onClick={() => setQuizDialogOpen(false)}>Close</Button>
+              </div>
             )}
           </DialogFooter>
         </DialogContent>

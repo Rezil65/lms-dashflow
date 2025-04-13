@@ -1,230 +1,237 @@
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, X, Award, Clock, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Quiz } from "./QuizManager";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface QuizTakerProps {
   quiz: Quiz;
   onComplete: (score: number, total: number) => void;
+  darkMode?: boolean;
 }
 
-const QuizTaker = ({ quiz, onComplete }: QuizTakerProps) => {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [submitted, setSubmitted] = useState(false);
+const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [score, setScore] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [remainingTime, setRemainingTime] = useState(quiz.options.length * 30); // 30 seconds per question
+  const [timerActive, setTimerActive] = useState(false);
 
-  const handleSingleOptionSelect = (optionId: string) => {
-    setSelectedOptions([optionId]);
-  };
-
-  const handleMultipleOptionSelect = (optionId: string, isChecked: boolean) => {
-    if (isChecked) {
-      setSelectedOptions([...selectedOptions, optionId]);
-    } else {
-      setSelectedOptions(selectedOptions.filter(id => id !== optionId));
-    }
-  };
-
-  const handleSubmit = () => {
-    if (selectedOptions.length === 0) return;
-
-    let correctCount = 0;
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
     
-    // Calculate score
-    if (quiz.type === 'multiple-choice') {
-      // For multiple choice, check each selected option
-      quiz.options.forEach(option => {
-        const isSelected = selectedOptions.includes(option.id);
-        if ((isSelected && option.isCorrect) || (!isSelected && !option.isCorrect)) {
-          correctCount++;
-        }
-      });
-      
-      // Score based on percentage of correct decisions
-      setScore(Math.round((correctCount / quiz.options.length) * 100));
+    if (timerActive && remainingTime > 0) {
+      timer = setInterval(() => {
+        setRemainingTime(prev => prev - 1);
+      }, 1000);
+    } else if (remainingTime === 0 && timerActive) {
+      handleSubmitQuiz();
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [remainingTime, timerActive]);
+
+  useEffect(() => {
+    // Reset state when quiz changes
+    setSelectedAnswers([]);
+    setQuizSubmitted(false);
+    setScore(0);
+    setCurrentQuestion(0);
+    setRemainingTime(quiz.options.length * 30);
+    setTimerActive(false);
+  }, [quiz]);
+
+  const handleAnswerChange = (optionId: string) => {
+    if (!timerActive) setTimerActive(true);
+    
+    if (quiz.type === 'single-choice') {
+      setSelectedAnswers([optionId]);
     } else {
-      // For single choice, check if the selected option is correct
-      const selectedOption = quiz.options.find(opt => opt.id === selectedOptions[0]);
-      if (selectedOption?.isCorrect) {
-        correctCount = 1;
-        setScore(100);
+      // For multiple choice
+      if (selectedAnswers.includes(optionId)) {
+        setSelectedAnswers(selectedAnswers.filter(id => id !== optionId));
       } else {
-        setScore(0);
+        setSelectedAnswers([...selectedAnswers, optionId]);
       }
     }
-
-    setSubmitted(true);
-    onComplete(correctCount, quiz.type === 'multiple-choice' ? quiz.options.length : 1);
   };
-
-  const isOptionCorrect = (option: { id: string; isCorrect: boolean }) => {
-    return option.isCorrect;
-  };
-
-  const isOptionSelected = (optionId: string) => {
-    return selectedOptions.includes(optionId);
-  };
-
-  const getOptionStatusClass = (option: { id: string; isCorrect: boolean }) => {
-    if (!submitted) return "";
-
-    if (option.isCorrect) {
-      return "border-green-500 bg-green-50";
-    }
+  
+  const handleSubmitQuiz = () => {
+    setTimerActive(false);
     
-    if (isOptionSelected(option.id) && !option.isCorrect) {
-      return "border-red-500 bg-red-50";
-    }
+    // Calculate score
+    let correctAnswers = 0;
+    let totalCorrectOptions = 0;
     
-    return "";
+    quiz.options.forEach(option => {
+      if (option.isCorrect) {
+        totalCorrectOptions++;
+        if (selectedAnswers.includes(option.id)) {
+          correctAnswers++;
+        }
+      } else if (selectedAnswers.includes(option.id)) {
+        // Penalty for wrong answers in multiple choice
+        correctAnswers--;
+      }
+    });
+    
+    // Ensure score isn't negative
+    correctAnswers = Math.max(0, correctAnswers);
+    
+    const calculatedScore = Math.round((correctAnswers / totalCorrectOptions) * 100);
+    setScore(calculatedScore);
+    setQuizSubmitted(true);
+    onComplete(calculatedScore, 100);
   };
 
-  const renderFeedback = () => {
-    if (!submitted) return null;
-    
-    return (
-      <Alert variant={score > 70 ? "default" : "destructive"} className="mt-4">
-        <div className="flex items-center">
-          {score > 70 ? (
-            <CheckCircle className="h-5 w-5 mr-2" />
-          ) : (
-            <AlertCircle className="h-5 w-5 mr-2" />
-          )}
-          <div>
-            <AlertTitle>Quiz Results</AlertTitle>
-            <AlertDescription>
-              Your score: {score}%
-            </AlertDescription>
-          </div>
-        </div>
-      </Alert>
-    );
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
-    <Card className="p-6">
-      <div className="space-y-6">
-        <div>
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-xl font-semibold">{quiz.title}</h3>
-            <Badge variant={quiz.type === 'multiple-choice' ? 'default' : 'outline'}>
-              {quiz.type === 'multiple-choice' ? 'Multiple Choice' : 
-               quiz.type === 'single-choice' ? 'Single Choice' : 
-               quiz.type === 'image' ? 'Image Quiz' : '3D Model Quiz'}
-            </Badge>
-          </div>
-          <p className="text-muted-foreground">{quiz.description}</p>
-        </div>
-
-        {quiz.type === 'image' && quiz.imageUrl && (
-          <div className="mt-4">
-            <img 
-              src={quiz.imageUrl} 
-              alt="Quiz image" 
-              className="max-h-60 object-contain rounded-md mx-auto border"
-            />
-          </div>
-        )}
-
-        {quiz.type === '3d-model' && quiz.modelUrl && (
-          <div className="mt-4 border rounded-md p-4 text-center">
-            <div className="text-muted-foreground">
-              3D model viewer would be displayed here
-            </div>
-          </div>
-        )}
-
+    <div className={`space-y-6 ${darkMode ? 'text-white' : ''}`}>
+      {!quizSubmitted ? (
         <div className="space-y-4">
-          <div className="font-medium">
-            {quiz.type === 'multiple-choice' 
-              ? 'Select all correct answers:' 
-              : 'Select the correct answer:'}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm text-muted-foreground">Question {currentQuestion + 1} of {quiz.options.length}</span>
+              <Progress 
+                value={((currentQuestion + 1) / quiz.options.length) * 100} 
+                className="h-1 mt-1 w-24" 
+              />
+            </div>
+            {timerActive && (
+              <div className={`flex items-center gap-1 ${remainingTime < 30 ? 'text-red-500' : ''}`}>
+                <Clock className="h-4 w-4" />
+                <span className="text-sm font-medium">{formatTime(remainingTime)}</span>
+              </div>
+            )}
           </div>
 
-          {quiz.type === 'single-choice' ? (
-            <RadioGroup
-              value={selectedOptions[0]}
-              onValueChange={handleSingleOptionSelect}
-              disabled={submitted}
-            >
-              <div className="space-y-2">
+          <div className="bg-white/5 p-4 rounded-md">
+            <h3 className="font-medium mb-4">{quiz.description || "Select the correct answer(s):"}</h3>
+            
+            {quiz.type === 'single-choice' ? (
+              <RadioGroup 
+                value={selectedAnswers[0]} 
+                onValueChange={(value) => handleAnswerChange(value)}
+                className="space-y-2"
+              >
                 {quiz.options.map((option) => (
-                  <div
-                    key={option.id}
-                    className={`flex items-center space-x-2 p-3 border rounded-md ${
-                      getOptionStatusClass(option)
-                    }`}
-                  >
-                    <RadioGroupItem value={option.id} id={option.id} disabled={submitted} />
-                    <Label htmlFor={option.id} className="flex-1 cursor-pointer">
+                  <div key={option.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/20 transition-all cursor-pointer">
+                    <RadioGroupItem 
+                      value={option.id} 
+                      id={option.id} 
+                      className="peer" 
+                    />
+                    <Label 
+                      htmlFor={option.id} 
+                      className="flex-1 cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
                       {option.text}
                     </Label>
-                    {submitted && option.isCorrect && (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    )}
-                    {submitted && isOptionSelected(option.id) && !option.isCorrect && (
-                      <XCircle className="h-5 w-5 text-red-500" />
-                    )}
+                  </div>
+                ))}
+              </RadioGroup>
+            ) : (
+              <div className="space-y-2">
+                {quiz.options.map((option) => (
+                  <div key={option.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-slate-50 transition-all cursor-pointer">
+                    <Checkbox 
+                      id={option.id} 
+                      checked={selectedAnswers.includes(option.id)} 
+                      onCheckedChange={() => handleAnswerChange(option.id)}
+                      className="peer"
+                    />
+                    <Label 
+                      htmlFor={option.id} 
+                      className="flex-1 cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {option.text}
+                    </Label>
                   </div>
                 ))}
               </div>
-            </RadioGroup>
-          ) : (
-            <div className="space-y-2">
-              {quiz.options.map((option) => (
-                <div
-                  key={option.id}
-                  className={`flex items-center space-x-2 p-3 border rounded-md ${
-                    getOptionStatusClass(option)
-                  }`}
-                >
-                  <Checkbox
-                    id={option.id}
-                    checked={isOptionSelected(option.id)}
-                    onCheckedChange={(checked) => 
-                      handleMultipleOptionSelect(option.id, checked === true)}
-                    disabled={submitted}
-                  />
-                  <Label htmlFor={option.id} className="flex-1 cursor-pointer">
-                    {option.text}
-                  </Label>
-                  {submitted && option.isCorrect && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
-                  {submitted && isOptionSelected(option.id) && !option.isCorrect && (
-                    <XCircle className="h-5 w-5 text-red-500" />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {renderFeedback()}
-
-        <div className="flex justify-end">
-          {!submitted ? (
+            )}
+          </div>
+          
+          <div className="flex justify-end">
             <Button 
-              onClick={handleSubmit} 
-              disabled={selectedOptions.length === 0}
+              onClick={handleSubmitQuiz} 
+              disabled={selectedAnswers.length === 0}
+              className="bg-primary hover:bg-primary/90"
             >
               Submit Answer
             </Button>
-          ) : (
-            <Button variant="outline">
-              Next Quiz
-            </Button>
-          )}
+          </div>
         </div>
-      </div>
-    </Card>
+      ) : (
+        <div className="space-y-6">
+          <div className={`text-center p-6 rounded-lg ${score >= 70 ? 'bg-green-50' : 'bg-amber-50'}`}>
+            <div className="mb-2 text-sm font-medium">Your score</div>
+            <div className="text-3xl font-bold mb-2">{score}%</div>
+            <Progress value={score} className="h-2 mb-4" />
+            <div className="mt-3">
+              {score >= 70 ? (
+                <div className="flex items-center justify-center text-green-600">
+                  <Award className="h-5 w-5 mr-2" />
+                  <span>Congratulations! You passed the quiz.</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center text-amber-600">
+                  <AlertCircle className="h-5 w-5 mr-2" />
+                  <span>Try again to improve your score.</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <h4 className="font-medium">Review Answers</h4>
+            <div className="space-y-2 bg-white p-4 rounded-md">
+              {quiz.options.map((option) => (
+                <div 
+                  key={option.id} 
+                  className={`p-2 rounded-md flex items-center ${
+                    option.isCorrect ? 'bg-green-50 border border-green-100' : 
+                    selectedAnswers.includes(option.id) ? 'bg-red-50 border border-red-100' : 'border'
+                  }`}
+                >
+                  {option.isCorrect ? (
+                    <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                  ) : (
+                    selectedAnswers.includes(option.id) && (
+                      <X className="h-4 w-4 mr-2 text-red-600" />
+                    )
+                  )}
+                  <span>{option.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button onClick={() => {
+              setQuizSubmitted(false);
+              setSelectedAnswers([]);
+              setTimerActive(false);
+              setRemainingTime(quiz.options.length * 30);
+            }}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
