@@ -74,6 +74,7 @@ const CourseContent = () => {
   const [editingCourseInfo, setEditingCourseInfo] = useState(false);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [showProgressCard, setShowProgressCard] = useState(true);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const { hasRole } = useAuth();
   
   const courseId = id || "0";
@@ -148,6 +149,18 @@ const CourseContent = () => {
     toast({
       title: "Content Embedded",
       description: `${embedData.title} has been embedded in the course.`
+    });
+  };
+  
+  const handleSaveQuizzes = (updatedQuizzes: Quiz[]) => {
+    setQuizzes(updatedQuizzes);
+    
+    const quizzesKey = `course-${courseId}-quizzes`;
+    localStorage.setItem(quizzesKey, JSON.stringify(updatedQuizzes));
+    
+    toast({
+      title: "Quizzes Saved",
+      description: `${updatedQuizzes.length} quiz${updatedQuizzes.length === 1 ? '' : 'zes'} saved successfully.`
     });
   };
   
@@ -282,7 +295,11 @@ const CourseContent = () => {
                     
                     <TabsContent value="quizzes">
                       {canEdit ? (
-                        <QuizManager courseId={courseId} />
+                        <QuizManager 
+                          courseId={courseId} 
+                          onSaveQuizzes={handleSaveQuizzes} 
+                          initialQuizzes={quizzes}
+                        />
                       ) : (
                         <div className="text-center py-8">
                           <p className="text-muted-foreground">Quizzes are now integrated within the modules.</p>
