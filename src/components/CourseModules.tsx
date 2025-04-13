@@ -543,10 +543,7 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                                   </div>
                                 </div>
                                 <Button 
-                                  as="a"
-                                  href={lesson.embedData?.url}
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
+                                  onClick={() => window.open(lesson.embedData?.url, '_blank', 'noopener,noreferrer')}
                                   size="sm"
                                   variant="outline"
                                 >
