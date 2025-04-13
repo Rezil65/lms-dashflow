@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -138,6 +137,7 @@ const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
                   <div 
                     key={option.id} 
                     className={`flex items-center space-x-2 p-3 rounded-md ${darkMode ? 'hover:bg-white/10' : 'hover:bg-muted/20'} transition-all cursor-pointer`}
+                    onClick={() => handleAnswerChange(option.id)}
                   >
                     <RadioGroupItem 
                       value={option.id} 

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -42,7 +41,6 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
   
   const isInstructor = hasRole(["admin", "instructor"]);
 
-  // Calculate module completion percentage
   const completionPercentage = module.lessons && module.lessons.length > 0
     ? (Object.keys(completedLessons).length / module.lessons.length) * 100
     : 0;
@@ -108,17 +106,14 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
   };
 
   const renderVideoPlayer = (url: string, title: string) => {
-    // Handle different video URLs
     let embedUrl = url;
     
-    // YouTube
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       const videoId = url.includes('v=') 
         ? new URLSearchParams(url.split('?')[1]).get('v')
         : url.split('/').pop()?.split('?')[0];
       embedUrl = `https://www.youtube.com/embed/${videoId}`;
     }
-    // Vimeo
     else if (url.includes('vimeo.com')) {
       const videoId = url.split('/').pop()?.split('?')[0];
       embedUrl = `https://player.vimeo.com/video/${videoId}`;
@@ -317,13 +312,10 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
                               </Button>
                               <div className="flex gap-2">
                                 <Button 
-                                  as="a"
-                                  href={lesson.embedData.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  size="sm"
                                   variant="outline"
+                                  size="sm"
                                   className="text-xs bg-white hover:bg-muted/30 transition-colors"
+                                  onClick={() => window.open(lesson.embedData?.url, '_blank', 'noopener,noreferrer')}
                                 >
                                   <ExternalLink size={12} className="inline mr-1" /> Open in New Tab
                                 </Button>
@@ -371,12 +363,9 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
                           </div>
                         </div>
                         <Button 
-                          as="a"
-                          href={lesson.embedData?.url}
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          size="sm"
                           variant="outline"
+                          size="sm"
+                          onClick={() => window.open(lesson.embedData?.url, '_blank', 'noopener,noreferrer')}
                         >
                           Download
                         </Button>
@@ -433,7 +422,6 @@ const ModuleDisplay = ({ module, onEdit }: ModuleDisplayProps) => {
         </Tabs>
       </CardContent>
       
-      {/* Fullscreen content modal */}
       {fullscreenContent && (
         <div className="fullscreen-content fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center overflow-auto p-4 animate-fade-in">
           <div className="absolute top-4 right-4 flex space-x-2">

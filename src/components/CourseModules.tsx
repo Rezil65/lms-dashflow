@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ChevronRight, BookOpen, ArrowRight, CheckCircle, Video, BookOpenCheck, FileText, ChevronDown, File, ExternalLink, Minimize, X } from "lucide-react";
+import { ChevronRight, BookOpen, ArrowRight, CheckCircle, Video, BookOpenCheck, FileText, ChevronDown, File, ExternalLink, Minimize, X, Maximize } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Course, getCourseById } from "@/utils/courseStorage";
 import { Module } from "@/components/ModuleEditor";
@@ -246,18 +245,14 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
   };
 
   const renderVideoPlayer = (url: string, title: string) => {
-    // Handle different video URLs
     let embedUrl = url;
     
-    // YouTube
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       const videoId = url.includes('v=') 
         ? new URLSearchParams(url.split('?')[1]).get('v')
         : url.split('/').pop()?.split('?')[0];
       embedUrl = `https://www.youtube.com/embed/${videoId}`;
-    }
-    // Vimeo
-    else if (url.includes('vimeo.com')) {
+    } else if (url.includes('vimeo.com')) {
       const videoId = url.split('/').pop()?.split('?')[0];
       embedUrl = `https://player.vimeo.com/video/${videoId}`;
     }
@@ -378,7 +373,6 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
             ))}
           </div>
         ) : (
-          // Full course content view (not preview)
           <div className="space-y-6">
             <Card>
               <CardHeader className="pb-2">
@@ -508,12 +502,8 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                                         getLessonIcon(lesson.type)}
                                     </div>
                                     <div>
-                                      <div className="font-medium text-sm">{lesson.title}</div>
-                                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        {lesson.duration}
-                                        <span>•</span>
-                                        <span className="capitalize">{lesson.type}</span>
-                                      </div>
+                                      <div className="font-medium">{lesson.title}</div>
+                                      <div className="text-xs text-muted-foreground">{lesson.duration}</div>
                                     </div>
                                   </div>
                                   <Button
@@ -690,12 +680,9 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                               </Button>
                               <div className="flex gap-2">
                                 <Button 
-                                  as="a"
-                                  href={lesson.embedData.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  size="sm"
                                   variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(lesson.embedData?.url, '_blank', 'noopener,noreferrer')}
                                 >
                                   <ExternalLink className="h-3 w-3 mr-1" /> Open in New Tab
                                 </Button>
@@ -740,12 +727,9 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                             </div>
                           </div>
                           <Button 
-                            as="a"
-                            href={lesson.embedData?.url}
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            size="sm"
                             variant="outline"
+                            size="sm"
+                            onClick={() => window.open(lesson.embedData?.url, '_blank', 'noopener,noreferrer')}
                           >
                             Download
                           </Button>
@@ -805,7 +789,6 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
         </DialogContent>
       </Dialog>
       
-      {/* Fullscreen content modal */}
       {fullscreenContent && (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center overflow-auto p-4 animate-fade-in">
           <div className="absolute top-4 right-4 flex space-x-2">
