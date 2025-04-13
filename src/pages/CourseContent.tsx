@@ -282,7 +282,7 @@ const CourseContent = () => {
                     
                     <TabsContent value="quizzes">
                       {canEdit ? (
-                        <QuizManager courseId={parseInt(courseId)} />
+                        <QuizManager courseId={courseId} />
                       ) : (
                         <div className="text-center py-8">
                           <p className="text-muted-foreground">Quizzes are now integrated within the modules.</p>
