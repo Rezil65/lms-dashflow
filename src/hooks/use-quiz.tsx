@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Json } from "@/integrations/supabase/types";
 
 export interface Quiz {
   id: string;
@@ -284,7 +285,7 @@ export const useQuiz = () => {
         score: result.score,
         completedAt: result.completed_at,
         // Cast selected options to the correct type
-        selectedOptions: result.selected_options as Record<string, string[]> || {}
+        selectedOptions: (result.selected_options as Record<string, string[]>) || {}
       }));
     } catch (error) {
       console.error("Error fetching user quiz results:", error);

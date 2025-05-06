@@ -81,7 +81,7 @@ export const getCourseById = async (courseId: string): Promise<Course | null> =>
 };
 
 // Create a new course
-export const createCourse = async (course: Partial<Course>): Promise<Course | null> => {
+export const createCourse = async (course: Partial<Course> & { title: string }): Promise<Course | null> => {
   if (!course.title) {
     console.error("Course title is required");
     return null;
