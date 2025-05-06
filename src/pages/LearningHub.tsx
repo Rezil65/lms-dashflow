@@ -1,11 +1,10 @@
-
 import React from "react";
 import { useParams } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, FileText, Play, Clock, CheckCircle, ChevronRight, ChevronLeft, Download, Maximize, Volume2 } from "lucide-react";
+import { BookOpen, FileText, Play, Clock, CheckCircle, ChevronRight, ChevronLeft, Download, Maximize, Volume2, Brain } from "lucide-react";
 
 // Define types for our chapter items
 type VideoChapter = {
@@ -216,7 +215,7 @@ const LearningHub = () => {
               <h2 className="text-2xl font-semibold mb-2">Carrot Cake Gingerbread</h2>
               
               <p className="text-muted-foreground mb-6">
-                Toffee croissant icing toffee. Sweet roll chupa chups marshmallow muffin liquorice chupa chups soufflé bonbon. Liquorice gummi bears cake donut chocolate lollipop gummi bears. Cotton candy cupcake ice cream gummies dessert muffin chocolate jelly. Danish brownie chocolate bar lollipop cookie tootsie roll candy canes. Jujubes lollipop cheesecake gummi bears cheesecake. Cake jujubes soufflé.
+                Toffee croissant icing toffee. Sweet roll chupa chups marshmallow muffin liquorice chupa chups soufflé bonbon. Liquorice gummi bears cake donut chocolate lollipop gummi bears. Cake jujubes soufflé.
               </p>
               
               {/* Resources */}
@@ -310,7 +309,7 @@ const LearningHub = () => {
                             )}
                             {chapter.type === 'quiz' && (
                               <span className="text-xs text-muted-foreground flex items-center">
-                                <BrainCircuit className="h-3 w-3 mr-1" />
+                                <Brain className="h-3 w-3 mr-1" />
                                 {(chapter as QuizChapter).questions} questions
                               </span>
                             )}
