@@ -1,309 +1,165 @@
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Course } from "@/utils/courseUtils";
-import { Save, Upload } from "lucide-react";
-
-const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  category: z.string().optional(),
-  level: z.string().optional(),
-  duration: z.string().optional(),
-  price: z.number().optional().or(z.string().transform(Number)),
-  is_featured: z.boolean().default(false),
-  thumbnail_url: z.string().optional(),
-});
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Course } from '@/utils/courseUtils';
 
 interface CourseFormProps {
-  initialCourse: Course;
-  onSave: (course: Course) => Promise<void>;
-  isLoading: boolean;
-  isEditing: boolean;
+  initialCourse?: Course;
+  onSave: (courseData: Course) => void;
+  isLoading?: boolean;
+  isEditing?: boolean;
 }
 
-const CourseForm = ({
-  initialCourse,
-  onSave,
-  isLoading,
-  isEditing,
-}: CourseFormProps) => {
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-    initialCourse.thumbnail_url || null
-  );
+const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = false }: CourseFormProps) => {
+  const [course, setCourse] = useState<Course>(initialCourse || {
+    id: "",
+    title: "",
+    description: "",
+    category: "",
+    level: "",
+    price: 0,
+    duration: "",
+    thumbnail_url: "",
+    is_featured: false
+  } as Course);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: initialCourse.title || "",
-      description: initialCourse.description || "",
-      category: initialCourse.category || "",
-      level: initialCourse.level || "",
-      duration: initialCourse.duration || "",
-      price: initialCourse.price || 0,
-      is_featured: initialCourse.is_featured || false,
-      thumbnail_url: initialCourse.thumbnail_url || "",
-    },
-  });
-
-  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Here you would normally upload the file to storage
-      // For now, we'll just set a local preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setThumbnailPreview(result);
-        form.setValue("thumbnail_url", result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setCourse({
+      ...course,
+      [name]: value
+    });
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Combine the form values with the original course data
-    const updatedCourse: Course = {
-      ...initialCourse,
-      ...values,
-    };
-    await onSave(updatedCourse);
+  const handleSelectChange = (name: string, value: string) => {
+    setCourse({
+      ...course,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(course);
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Course Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter course title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Enter course description"
-                      rows={5}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Web Development">
-                          Web Development
-                        </SelectItem>
-                        <SelectItem value="Mobile Development">
-                          Mobile Development
-                        </SelectItem>
-                        <SelectItem value="Data Science">Data Science</SelectItem>
-                        <SelectItem value="Design">Design</SelectItem>
-                        <SelectItem value="Business">Business</SelectItem>
-                        <SelectItem value="Marketing">Marketing</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Level</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Duration</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 6 hours" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field: { onChange, ...rest } }) => (
-                  <FormItem>
-                    <FormLabel>Price (USD)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-                        {...rest}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="is_featured"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="cursor-pointer">
-                    Feature this course
-                  </FormLabel>
-                </FormItem>
-              )}
+    <Card>
+      <CardHeader>
+        <CardTitle>{isEditing ? 'Edit Course' : 'Create New Course'}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Course Title</Label>
+            <Input 
+              id="title" 
+              name="title" 
+              value={course.title} 
+              onChange={handleInputChange} 
+              placeholder="Enter course title"
+              required
             />
           </div>
-
-          <div className="space-y-6">
-            <div>
-              <FormLabel>Course Thumbnail</FormLabel>
-              <div className="mt-2 border rounded-md p-4 text-center">
-                {thumbnailPreview ? (
-                  <div className="space-y-3">
-                    <img
-                      src={thumbnailPreview}
-                      alt="Course thumbnail preview"
-                      className="w-full h-40 object-cover rounded-md"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        setThumbnailPreview(null);
-                        form.setValue("thumbnail_url", "");
-                      }}
-                    >
-                      Remove Image
-                    </Button>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="border-2 border-dashed rounded-md p-6 mb-3">
-                      <Upload className="w-10 h-10 mx-auto text-muted-foreground" />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Drag & drop or click to upload
-                      </p>
-                    </div>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleThumbnailChange}
-                      className="hidden"
-                      id="thumbnail-upload"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => document.getElementById("thumbnail-upload")?.click()}
-                    >
-                      Browse Files
-                    </Button>
-                  </div>
-                )}
-              </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Course Description</Label>
+            <Textarea 
+              id="description" 
+              name="description" 
+              value={course.description} 
+              onChange={handleInputChange} 
+              placeholder="Describe your course"
+              rows={5}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select 
+                value={course.category || ''} 
+                onValueChange={(value) => handleSelectChange('category', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="programming">Programming</SelectItem>
+                  <SelectItem value="design">Design</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                  <SelectItem value="personal-development">Personal Development</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="level">Level</Label>
+              <Select 
+                value={course.level || ''} 
+                onValueChange={(value) => handleSelectChange('level', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isLoading}>
-            <Save className="mr-2 h-4 w-4" />
-            {isEditing ? "Update Course" : "Create Course"}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="price">Price ($)</Label>
+              <Input 
+                id="price" 
+                name="price" 
+                type="number" 
+                value={course.price || 0} 
+                onChange={handleInputChange}
+                min={0}
+                step={0.01}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="duration">Duration</Label>
+              <Input 
+                id="duration" 
+                name="duration" 
+                value={course.duration || ''} 
+                onChange={handleInputChange} 
+                placeholder="e.g. 2 hours 30 minutes"
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
+            <Input 
+              id="thumbnail_url" 
+              name="thumbnail_url" 
+              value={course.thumbnail_url || ''} 
+              onChange={handleInputChange} 
+              placeholder="Enter image URL for course thumbnail"
+            />
+          </div>
+          
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Saving...' : (isEditing ? 'Update Course' : 'Create Course')}
           </Button>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

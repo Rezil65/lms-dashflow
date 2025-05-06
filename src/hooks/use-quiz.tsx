@@ -62,7 +62,7 @@ export const useQuiz = () => {
     
     try {
       // 1. Create the quiz
-      const { data: quizData, error: quizError } = await supabase
+      const { data: newQuizData, error: quizError } = await supabase
         .from('quizzes')
         .insert({
           course_id: courseId,
@@ -75,7 +75,7 @@ export const useQuiz = () => {
       
       if (quizError) throw quizError;
       
-      const quizId = quizData.id;
+      const quizId = newQuizData.id;
       
       // 2. Create all questions and options
       for (const question of quizData.questions) {
@@ -84,7 +84,7 @@ export const useQuiz = () => {
           .insert({
             quiz_id: quizId,
             question: question.question,
-            sort_order: question.sort_order || 0
+            sort_order: 0
           })
           .select()
           .single();
@@ -99,7 +99,7 @@ export const useQuiz = () => {
               question_id: questionData.id,
               text: option.text,
               is_correct: option.isCorrect,
-              sort_order: option.sort_order || 0
+              sort_order: 0
             });
           
           if (optionError) throw optionError;
@@ -218,6 +218,9 @@ export const useQuiz = () => {
     }
   };
 
+  // Alias for getQuizzesByCourseId
+  const getQuizzesByCourse = getQuizzesByCourseId;
+
   // Submit quiz results
   const submitQuizResult = async ({ quizId, score, totalQuestions, selectedOptions }: SubmitQuizResultParams): Promise<boolean> => {
     if (!user) {
@@ -280,7 +283,8 @@ export const useQuiz = () => {
         quizId: result.quiz_id,
         score: result.score,
         completedAt: result.completed_at,
-        selectedOptions: result.selected_options || {}
+        // Cast selected options to the correct type
+        selectedOptions: result.selected_options as Record<string, string[]> || {}
       }));
     } catch (error) {
       console.error("Error fetching user quiz results:", error);
@@ -428,6 +432,7 @@ export const useQuiz = () => {
     createQuiz,
     getQuizById,
     getQuizzesByCourseId,
+    getQuizzesByCourse,
     submitQuizResult,
     getUserQuizResults,
     updateQuiz,

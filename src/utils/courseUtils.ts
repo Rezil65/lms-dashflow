@@ -35,7 +35,6 @@ export interface Lesson {
   duration?: string;
   embed_url?: string;
   sort_order?: number;
-  // Added missing properties
   embedData?: {
     url?: string;
     type?: string;
@@ -110,6 +109,9 @@ export const createCourse = async (course: Partial<Course>): Promise<Course | nu
   
   return data;
 };
+
+// Alias for createCourse for compatibility
+export const saveCourse = createCourse;
 
 // Update an existing course
 export const updateCourse = async (courseId: string, updates: Partial<Course>): Promise<Course | null> => {
@@ -191,14 +193,14 @@ export const getCoursesCount = async (): Promise<number> => {
 };
 
 // Add a module to a course
-export const addModuleToCourse = async (courseId: string, module: Partial<Module>): Promise<Module | null> => {
+export const addModuleToCourse = async (courseId: string, moduleData: Partial<Module> & { title: string }): Promise<Module | null> => {
   const { data, error } = await supabase
     .from('modules')
     .insert({
       course_id: courseId,
-      title: module.title || "New Module",
-      description: module.description || "",
-      sort_order: module.sort_order || 0
+      title: moduleData.title,
+      description: moduleData.description || "",
+      sort_order: moduleData.sort_order || 0
     })
     .select()
     .single();
@@ -212,17 +214,17 @@ export const addModuleToCourse = async (courseId: string, module: Partial<Module
 };
 
 // Add a lesson to a module
-export const addLessonToModule = async (moduleId: string, lesson: Partial<Lesson>): Promise<Lesson | null> => {
+export const addLessonToModule = async (moduleId: string, lessonData: Partial<Lesson> & { title: string }): Promise<Lesson | null> => {
   const { data, error } = await supabase
     .from('lessons')
     .insert({
       module_id: moduleId,
-      title: lesson.title || "New Lesson",
-      content: lesson.content || "",
-      type: lesson.type || "text",
-      duration: lesson.duration || "",
-      embed_url: lesson.embedData?.url || null,
-      sort_order: lesson.sort_order || 0
+      title: lessonData.title,
+      content: lessonData.content || "",
+      type: lessonData.type || "text",
+      duration: lessonData.duration || "",
+      embed_url: lessonData.embedData?.url || null,
+      sort_order: lessonData.sort_order || 0
     })
     .select()
     .single();

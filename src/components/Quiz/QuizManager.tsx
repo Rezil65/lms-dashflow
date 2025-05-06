@@ -44,7 +44,7 @@ interface QuizManagerProps {
 
 const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
   const { toast } = useToast();
-  const { getQuizzesByCourse, createQuiz, loading } = useQuiz();
+  const { getQuizzesByCourseId, createQuiz, deleteQuiz, loading } = useQuiz();
   const [quizzes, setQuizzes] = useState<QuizType[]>([]);
   const [activeTab, setActiveTab] = useState("existing");
   const [editingQuiz, setEditingQuiz] = useState<QuizType | null>(null);
@@ -72,7 +72,7 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
 
   const loadQuizzes = async () => {
     if (courseId) {
-      const loadedQuizzes = await getQuizzesByCourse(courseId);
+      const loadedQuizzes = await getQuizzesByCourseId(courseId);
       setQuizzes(loadedQuizzes);
     }
   };
@@ -138,7 +138,7 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
     setNewQuizQuestions([
       ...newQuizQuestions,
       {
-        id: `temp-${Date.now()}`, // Add temporary ID
+        id: `temp-${Date.now()}`,
         question: newQuestion,
         type: questionType,
         options: [...options],
@@ -177,24 +177,33 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
       return;
     }
 
+    if (!courseId) {
+      toast({
+        title: "Course ID Required",
+        description: "No course ID provided.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const quiz: Omit<QuizType, 'id'> = {
         title: newQuizTitle,
         description: newQuizDescription,
-        courseId,
+        courseId: courseId,
         questions: newQuizQuestions.map(q => ({
-          id: q.id || `temp-${Date.now()}`, // Use temp ID if no ID present
+          id: q.id || `temp-${Date.now()}`,
           question: q.question,
-          type: q.type,
+          type: q.type || 'single-choice',
           options: q.options.map((opt, idx) => ({
-            id: `temp-opt-${idx}-${Date.now()}`, // Add temporary ID for options
+            id: `temp-opt-${idx}-${Date.now()}`,
             text: opt.text,
             isCorrect: opt.isCorrect,
           })),
         }))
       };
       
-      await createQuiz(quiz);
+      await createQuiz(courseId, quiz);
       loadQuizzes();
       
       // Reset form
@@ -208,6 +217,25 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (quizToDelete) {
+      try {
+        const success = await deleteQuiz(quizToDelete);
+        if (success) {
+          loadQuizzes();
+          setQuizToDelete(null);
+          setConfirmDeleteOpen(false);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error Deleting Quiz",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -475,10 +503,7 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                // TODO: Implement delete quiz functionality with Supabase
-                setConfirmDeleteOpen(false);
-              }}
+              onClick={handleDeleteQuiz}
             >
               Delete
             </Button>
