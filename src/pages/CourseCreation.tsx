@@ -25,9 +25,9 @@ const CourseCreation = () => {
     level: "",
     price: 0,
     duration: "",
-    thumbnail: "", // Changed from thumbnail_url to thumbnail
+    thumbnail: "",
     modules: [],
-    createdAt: new Date().toISOString() // Added required field
+    createdAt: new Date().toISOString()
   });
   
   const [loading, setLoading] = useState(false);

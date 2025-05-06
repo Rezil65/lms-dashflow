@@ -1,6 +1,6 @@
 
 import { Search, User, LogOut, ChevronDown } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -42,7 +42,8 @@ const Header = () => {
             <img 
               src="/lovable-uploads/b4b49a49-4415-4608-919d-8c583dd41903.png" 
               alt="Kyureeus Logo" 
-              className="h-8 hover:opacity-80 transition-opacity"
+              className="h-8 hover:opacity-80 transition-opacity cursor-pointer"
+              onClick={() => navigate('/dashboard')}
             />
           </div>
           <div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import DashboardOverview from "@/components/admin/DashboardOverview";
@@ -19,9 +20,22 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeedPost } from "@/components/CourseFeeds";
 import { Button } from "@/components/ui/button";
 
-const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState("overview");
+interface AdminDashboardProps {
+  defaultTab?: string;
+}
+
+const AdminDashboard = ({ defaultTab = "overview" }: AdminDashboardProps) => {
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const { hasPermission } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // If URL path contains a tab identifier, use it to set the active tab
+  useEffect(() => {
+    if (location.pathname === "/admin/courses") {
+      setActiveTab("courses");
+    }
+  }, [location.pathname]);
 
   const tabs = [
     { id: "overview", label: "Dashboard", component: <DashboardOverview />, permission: "view_dashboard" },
@@ -42,9 +56,26 @@ const AdminDashboard = () => {
     tab.permission === null || hasPermission(tab.permission)
   );
 
-  if (authorizedTabs.length > 0 && !authorizedTabs.some(tab => tab.id === activeTab)) {
-    setActiveTab(authorizedTabs[0].id);
-  }
+  // Make sure activeTab exists in authorizedTabs
+  useEffect(() => {
+    if (authorizedTabs.length > 0 && !authorizedTabs.some(tab => tab.id === activeTab)) {
+      setActiveTab(authorizedTabs[0].id);
+    }
+  }, [authorizedTabs, activeTab]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // Update URL to reflect the current tab for better navigation
+    if (value === "overview") {
+      navigate("/admin"); // Base admin route for overview
+    } else if (value === "courses") {
+      navigate("/admin/courses"); // Specific route for courses
+    } else {
+      // For other tabs, stay on the current URL but remember the tab
+      setActiveTab(value);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -70,7 +101,7 @@ const AdminDashboard = () => {
           <Tabs 
             defaultValue={authorizedTabs[0]?.id || "overview"} 
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             className="space-y-6"
           >
             <div className="bg-white rounded-lg border shadow-sm p-1">

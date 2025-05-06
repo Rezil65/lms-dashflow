@@ -52,16 +52,22 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isHovering, setIsHovering] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   
-  // Handle sidebar hover effect
+  // Handle sidebar hover effect with delay
   const handleMouseEnter = () => {
     if (collapsed) {
-      setIsHovering(true);
+      const timer = setTimeout(() => {
+        setIsHovering(true);
+      }, 200); // Add a small delay before expanding
+      return () => clearTimeout(timer);
     }
   };
 
   const handleMouseLeave = () => {
-    if (collapsed) {
-      setIsHovering(false);
+    if (collapsed && isHovering) {
+      const timer = setTimeout(() => {
+        setIsHovering(false);
+      }, 300); // Add a small delay before collapsing
+      return () => clearTimeout(timer);
     }
   };
 
@@ -110,7 +116,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     <div className={`min-h-screen flex bg-background ${isExpanded ? "" : "overflow-hidden"}`}>
       {/* Sidebar */}
       <Sidebar 
-        className={`border-r shadow-sm transition-all duration-300 ${
+        className={`border-r shadow-sm transition-all duration-300 ease-in-out ${
           isExpanded ? (collapsed ? "w-[80px]" : "w-[250px]") : "w-0"
         } ${(isHovering && collapsed) ? "!w-[250px]" : ""}`}
         onMouseEnter={handleMouseEnter}
@@ -163,7 +169,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <SidebarContent className="pt-4">
           <div className={`flex ${(collapsed && !isHovering) ? "justify-center" : "flex-col items-center"} mb-6`}>
             <Avatar className={`${(collapsed && !isHovering) ? "h-10 w-10" : "h-16 w-16"} border-2 border-primary transition-all duration-300`}>
-              <img src="/public/lovable-uploads/79b57a48-41b3-47a6-aba3-8cf20a45a438.png" alt="User" />
+              <img src="/lovable-uploads/79b57a48-41b3-47a6-aba3-8cf20a45a438.png" alt="User" />
             </Avatar>
             {(!collapsed || isHovering) && (
               <h3 className="mt-2 font-medium text-sm">

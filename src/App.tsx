@@ -16,7 +16,7 @@ import MfaSetup from "./pages/MfaSetup";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionGuard from "./components/PermissionGuard";
-import Dashboard from "./pages/Dashboard"; // New import
+import Dashboard from "./pages/Dashboard";
 import LearningHub from "./pages/LearningHub";
 import QuizPage from "./pages/QuizPage";
 import QuizTakePage from "./pages/QuizTakePage";
@@ -25,6 +25,7 @@ import CoursesPage from "./pages/CoursesPage";
 import MiscellaneousPage from "./pages/MiscellaneousPage";
 import SettingsPage from "./pages/SettingsPage";
 import HelpPage from "./pages/HelpPage";
+import LearnerDashboard from "./pages/LearnerDashboard";
 
 const App = () => (
   <ThemeProvider>
@@ -42,6 +43,16 @@ const App = () => (
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Learner Dashboard */}
+        <Route 
+          path="/learner" 
+          element={
+            <ProtectedRoute>
+              <LearnerDashboard />
             </ProtectedRoute>
           } 
         />
@@ -135,7 +146,7 @@ const App = () => (
           } 
         />
         
-        {/* Legacy Dashboard Pages */}
+        {/* Admin Dashboard and Admin Routes */}
         <Route 
           path="/admin" 
           element={
@@ -145,6 +156,35 @@ const App = () => (
           } 
         />
         
+        {/* New Admin Course Routes */}
+        <Route 
+          path="/admin/courses" 
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminDashboard defaultTab="courses" />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/admin/courses/new" 
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <CourseCreation />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/admin/courses/edit/:id" 
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <CourseCreation />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Instructor Dashboard */}
         <Route 
           path="/instructor" 
           element={
@@ -176,15 +216,11 @@ const App = () => (
           } 
         />
         
+        {/* Legacy route - redirect to new admin route */}
         <Route 
           path="/create-course" 
           element={
-            <PermissionGuard 
-              requiredPermissions={["manage_courses", "manage_own_courses"]} 
-              redirectTo="/admin"
-            >
-              <CourseCreation />
-            </PermissionGuard>
+            <Navigate to="/admin/courses/new" replace />
           } 
         />
         
