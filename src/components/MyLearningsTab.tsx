@@ -29,7 +29,7 @@ const MyLearningsTab = () => {
         
         // Fetch user progress if user is logged in
         if (user?.id) {
-          const progress = await getUserProgress(user.id);
+          const progress = await getUserProgress(String(user.id));
           setUserProgress(progress);
         }
       } catch (error) {

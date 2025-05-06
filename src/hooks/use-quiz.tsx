@@ -66,10 +66,10 @@ export const useQuiz = () => {
       const { data: newQuizData, error: quizError } = await supabase
         .from('quizzes')
         .insert({
-          course_id: courseId,
+          course_id: String(courseId),
           title: quizData.title,
           description: quizData.description || null,
-          created_by: user.id
+          created_by: String(user.id)
         })
         .select()
         .single();
@@ -239,10 +239,10 @@ export const useQuiz = () => {
       const { error } = await supabase
         .from('user_quiz_results')
         .insert({
-          user_id: user.id,
-          quiz_id: quizId,
+          user_id: String(user.id),
+          quiz_id: String(quizId),
           score: score,
-          selected_options: selectedOptions
+          selected_options: selectedOptions as Json
         });
       
       if (error) throw error;
