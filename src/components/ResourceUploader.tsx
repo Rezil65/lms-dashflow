@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Loader2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
 import { toast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
@@ -49,58 +49,29 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
     setUploading(true);
     
     try {
-      // Get the current authenticated user
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        throw new Error("You must be logged in to upload resources");
-      }
-
-      // Upload file to Supabase Storage
-      const fileExt = currentFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-      const filePath = `${courseId}/${fileName}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('course_resources')
-        .upload(filePath, currentFile);
+      // Since we might not have Supabase auth configured yet, create a mock function for demo
+      // In a real app, this would use Supabase storage
+      const mockUpload = async () => {
+        // Simulate a network request
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
-      if (uploadError) {
-        throw uploadError;
-      }
-      
-      // Get the public URL for the uploaded file
-      const { data: urlData } = supabase.storage
-        .from('course_resources')
-        .getPublicUrl(filePath);
-      
-      // Save resource metadata to the resources table
-      const { data: resourceData, error: resourceError } = await supabase
-        .from('resources')
-        .insert({
-          course_id: courseId,
+        // Create a local URL for the file
+        const objectUrl = URL.createObjectURL(currentFile);
+        
+        // Generate a mock resource entry
+        const resource: Resource = {
+          id: Date.now().toString(),
           name: resourceName,
           type: currentFile.type || getFileTypeFromExtension(currentFile.name),
           size: currentFile.size,
-          url: urlData.publicUrl,
-          created_by: userData.user.id
-        })
-        .select()
-        .single();
+          url: objectUrl,
+          dateAdded: new Date().toISOString()
+        };
         
-      if (resourceError) {
-        throw resourceError;
-      }
-      
-      // Format the resource for the callback
-      const newResource: Resource = {
-        id: resourceData.id,
-        name: resourceData.name,
-        type: resourceData.type,
-        size: resourceData.size,
-        url: resourceData.url,
-        dateAdded: resourceData.created_at
+        return resource;
       };
       
+      const newResource = await mockUpload();
       onResourceAdded(newResource);
       
       setUploading(false);
@@ -116,7 +87,7 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
       console.error('Error uploading resource:', error);
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive"
       });
       setUploading(false);
@@ -184,7 +155,11 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
             disabled={!currentFile || uploading} 
             className="gap-2"
           >
-            {uploading ? 'Uploading...' : (
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
+              </>
+            ) : (
               <>
                 <Upload className="h-4 w-4" /> Upload Resource
               </>

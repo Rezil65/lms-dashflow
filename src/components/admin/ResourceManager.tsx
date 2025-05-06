@@ -2,21 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, X, Download, File, FileArchive, FileImage, FileVideo } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { FileText, X, Download, File, FileArchive, FileImage, FileVideo } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import ResourceUploader, { Resource } from "@/components/ResourceUploader";
 
 interface ResourceManagerProps {
   courseId: string;
-}
-
-interface Resource {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  url: string;
-  created_at: string;
 }
 
 const ResourceManager = ({ courseId }: ResourceManagerProps) => {
@@ -25,56 +16,59 @@ const ResourceManager = ({ courseId }: ResourceManagerProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadResources();
+    // Mock data loading
+    const loadMockResources = async () => {
+      setLoading(true);
+      // Simulate network request
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock resources
+      const mockResources: Resource[] = [
+        {
+          id: '1',
+          name: 'Course Syllabus',
+          type: 'application/pdf',
+          size: 1024 * 1024 * 2.5, // 2.5MB
+          url: '#',
+          dateAdded: new Date().toISOString()
+        },
+        {
+          id: '2',
+          name: 'Lecture Slides',
+          type: 'application/pptx',
+          size: 1024 * 1024 * 5.8, // 5.8MB
+          url: '#',
+          dateAdded: new Date().toISOString()
+        },
+        {
+          id: '3',
+          name: 'Demo Video',
+          type: 'video/mp4',
+          size: 1024 * 1024 * 15.3, // 15.3MB
+          url: '#',
+          dateAdded: new Date().toISOString()
+        }
+      ];
+      
+      setResources(mockResources);
+      setLoading(false);
+    };
+    
+    loadMockResources();
   }, [courseId]);
 
-  const loadResources = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('resources')
-        .select('*')
-        .eq('course_id', courseId);
-
-      if (error) throw error;
-      
-      setResources(data || []);
-    } catch (error) {
-      console.error("Error loading resources:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load resources",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleDeleteResource = (resourceId: string) => {
+    // Filter out the deleted resource
+    setResources(resources.filter(resource => resource.id !== resourceId));
+    
+    toast({
+      title: "Resource deleted",
+      description: "The resource has been removed",
+    });
   };
 
-  const handleDeleteResource = async (resourceId: string) => {
-    try {
-      const { error } = await supabase
-        .from('resources')
-        .delete()
-        .eq('id', resourceId);
-
-      if (error) throw error;
-      
-      // Remove from local state
-      setResources(resources.filter(resource => resource.id !== resourceId));
-      
-      toast({
-        title: "Resource deleted",
-        description: "The resource has been removed",
-      });
-    } catch (error) {
-      console.error("Error deleting resource:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete resource",
-        variant: "destructive",
-      });
-    }
+  const handleAddResource = (newResource: Resource) => {
+    setResources([...resources, newResource]);
   };
 
   const getFileIcon = (type: string) => {
@@ -95,9 +89,7 @@ const ResourceManager = ({ courseId }: ResourceManagerProps) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Course Resources</h2>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Add Resource
-        </Button>
+        <ResourceUploader courseId={courseId} onResourceAdded={handleAddResource} />
       </div>
 
       {loading ? (
@@ -122,7 +114,7 @@ const ResourceManager = ({ courseId }: ResourceManagerProps) => {
               {resources.map((resource) => (
                 <div 
                   key={resource.id}
-                  className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/10"
+                  className="flex items-center justify-between p-3 rounded-md border bg-card hover:bg-accent/10 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-primary/10 rounded-md">
@@ -131,7 +123,7 @@ const ResourceManager = ({ courseId }: ResourceManagerProps) => {
                     <div>
                       <p className="font-medium">{resource.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatFileSize(resource.size)} • {new Date(resource.created_at).toLocaleDateString()}
+                        {formatFileSize(resource.size)} • {new Date(resource.dateAdded).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -145,7 +137,7 @@ const ResourceManager = ({ courseId }: ResourceManagerProps) => {
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="text-destructive"
+                      className="text-destructive hover:bg-destructive/10"
                       onClick={() => handleDeleteResource(resource.id)}
                     >
                       <X className="w-4 h-4" />

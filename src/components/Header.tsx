@@ -33,6 +33,10 @@ const Header = () => {
   const handleProfileClick = () => {
     navigate('/profile');
   };
+
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
+  };
   
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-md shadow-sm" : "bg-transparent"}`}>
@@ -80,6 +84,10 @@ const Header = () => {
               <DropdownMenuItem onClick={handleProfileClick}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDashboardClick}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Dashboard</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
