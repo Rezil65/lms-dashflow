@@ -20,8 +20,8 @@ const courseSchema = z.object({
   level: z.string().optional(),
   price: z.number().min(0, "Price must be a positive number"),
   duration: z.string().optional(),
-  thumbnail_url: z.string().optional(),
-  is_featured: z.boolean().optional(),
+  thumbnail: z.string().optional(), // Changed from thumbnail_url to match Course interface
+  isFeatured: z.boolean().optional(), // Changed from is_featured to match Course interface
 });
 
 interface CourseFormProps {
@@ -32,7 +32,7 @@ interface CourseFormProps {
 }
 
 const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = false }: CourseFormProps) => {
-  // Convert the initialCourse to match the form structure
+  // Convert the initialCourse to match the form structure or use default values
   const defaultValues = initialCourse || {
     id: "",
     title: "",
@@ -41,8 +41,9 @@ const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = fals
     level: "",
     price: 0,
     duration: "",
-    thumbnail_url: "",
-    is_featured: false
+    thumbnail: "", // Changed from thumbnail_url to thumbnail
+    isFeatured: false, // Changed from is_featured to isFeatured
+    createdAt: new Date().toISOString() // Add required field
   } as Course;
 
   const form = useForm({
@@ -51,10 +52,11 @@ const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = fals
   });
 
   const handleSubmit = form.handleSubmit((data) => {
-    // Preserve the id if we're editing
+    // Preserve the id if we're editing and ensure createdAt is present
     const courseData = {
       ...data,
       id: initialCourse?.id || "",
+      createdAt: initialCourse?.createdAt || new Date().toISOString()
     } as Course;
     
     onSave(courseData);
@@ -167,7 +169,6 @@ const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = fals
                         type="number" 
                         min={0}
                         step={0.01}
-                        {...field}
                         onChange={e => field.onChange(parseFloat(e.target.value))}
                         value={field.value}
                       />
@@ -195,7 +196,7 @@ const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = fals
             
             <FormField
               control={form.control}
-              name="thumbnail_url"
+              name="thumbnail"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Thumbnail URL</FormLabel>

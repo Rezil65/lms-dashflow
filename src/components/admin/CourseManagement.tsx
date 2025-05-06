@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -178,9 +179,9 @@ const CourseManagement = () => {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 rounded overflow-hidden bg-muted flex items-center justify-center">
-                        {course.thumbnail_url ? (
+                        {course.thumbnail ? (
                           <img 
-                            src={course.thumbnail_url} 
+                            src={course.thumbnail} 
                             alt={course.title}
                             className="h-full w-full object-cover" 
                           />
@@ -213,7 +214,7 @@ const CourseManagement = () => {
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="text-sm text-muted-foreground">
-                      {course.created_at ? new Date(course.created_at).toLocaleDateString() : '-'}
+                      {course.createdAt ? new Date(course.createdAt).toLocaleDateString() : '-'}
                     </div>
                   </TableCell>
                   <TableCell>

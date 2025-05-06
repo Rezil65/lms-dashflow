@@ -16,6 +16,7 @@ export interface Lesson {
   type: string;
   duration: string;
   embedData?: EmbedData;
+  quiz?: any; // Adding the quiz property that's used in CourseModules.tsx
 }
 
 export interface Course {
