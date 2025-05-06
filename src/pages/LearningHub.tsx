@@ -7,11 +7,52 @@ import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, FileText, Play, Clock, CheckCircle, ChevronRight, ChevronLeft, Download, Maximize, Volume2 } from "lucide-react";
 
+// Define types for our chapter items
+type VideoChapter = {
+  id: string;
+  title: string;
+  type: "video";
+  duration: string;
+  isCompleted: boolean;
+  current?: boolean;
+};
+
+type DocumentChapter = {
+  id: string;
+  title: string;
+  type: "document";
+  isCompleted: boolean;
+  current?: boolean;
+};
+
+type QuizChapter = {
+  id: string;
+  title: string;
+  type: "quiz";
+  questions: number;
+  isCompleted: boolean;
+  current?: boolean;
+};
+
+type Chapter = VideoChapter | DocumentChapter | QuizChapter;
+
+interface CourseModule {
+  id: string;
+  title: string;
+  chapters: Chapter[];
+}
+
+interface Course {
+  id: string;
+  title: string;
+  modules: CourseModule[];
+}
+
 const LearningHub = () => {
   const { courseId, contentId } = useParams();
   
   // Mock course data
-  const course = {
+  const course: Course = {
     id: courseId || "course1",
     title: "Bread Making Techniques",
     modules: [
@@ -261,10 +302,16 @@ const LearningHub = () => {
                             {chapter.title}
                           </span>
                           <div className="flex items-center mt-1">
-                            {chapter.duration && (
+                            {chapter.type === 'video' && (
                               <span className="text-xs text-muted-foreground flex items-center">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {chapter.duration}
+                                {(chapter as VideoChapter).duration}
+                              </span>
+                            )}
+                            {chapter.type === 'quiz' && (
+                              <span className="text-xs text-muted-foreground flex items-center">
+                                <BrainCircuit className="h-3 w-3 mr-1" />
+                                {(chapter as QuizChapter).questions} questions
                               </span>
                             )}
                           </div>
