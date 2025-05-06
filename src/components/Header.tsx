@@ -37,9 +37,18 @@ const Header = () => {
   return (
     <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? "bg-white/80 backdrop-blur-md shadow-sm" : "bg-transparent"}`}>
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-1">
-          <h1 className="text-xl font-display font-semibold text-lms-blue">Kyureeus Learning Portal</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">Your path to tech mastery</p>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center">
+            <img 
+              src="/lovable-uploads/b4b49a49-4415-4608-919d-8c583dd41903.png" 
+              alt="Kyureeus Logo" 
+              className="h-8"
+            />
+          </div>
+          <div>
+            <h1 className="text-xl font-display font-semibold text-lms-blue">Learning Portal</h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">Your path to tech mastery</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-4">

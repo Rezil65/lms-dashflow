@@ -215,10 +215,10 @@ const SidebarMenuButton = React.forwardRef<
     <button
       ref={ref}
       className={cn(
-        "flex items-center gap-2 w-full py-2 px-3 rounded-md text-sidebar-foreground/80 hover:text-sidebar-foreground transition-colors",
+        "flex items-center gap-2 w-full py-2 px-3 rounded-md text-sidebar-foreground/80 hover:text-sidebar-foreground transition-colors transition-all duration-200",
         isActive
           ? "bg-sidebar-accent text-sidebar-primary font-medium"
-          : "hover:bg-sidebar-accent/50",
+          : "hover:bg-sidebar-accent/70 hover:translate-x-1",
         className
       )}
       {...props}
@@ -254,7 +254,7 @@ const SidebarTrigger = React.forwardRef<HTMLButtonElement, SidebarTriggerProps>(
         ref={ref}
         onClick={() => setCollapsed(!collapsed)}
         className={cn(
-          "h-9 w-9 flex items-center justify-center rounded-md border",
+          "h-9 w-9 flex items-center justify-center rounded-md border transition-transform hover:scale-105 active:scale-95",
           className
         )}
         {...props}
