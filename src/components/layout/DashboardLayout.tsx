@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Sidebar, 
@@ -24,8 +24,9 @@ import {
   UserCircle,
   Sun,
   Moon,
-  Menu,
-  ChevronLeft
+  ChevronLeft,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -47,7 +49,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   
+  // Handle sidebar hover effect
+  const handleMouseEnter = () => {
+    if (collapsed) {
+      setIsHovering(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (collapsed) {
+      setIsHovering(false);
+    }
+  };
+
+  // Toggle sidebar collapse/expand
+  const toggleSidebar = () => {
+    setCollapsed(!collapsed);
+    setIsHovering(false);
+  };
+
+  // Handle full expand/minimize
+  const toggleFullExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   const handleNavigation = (path: string) => {
     navigate(path);
   };
@@ -74,26 +102,24 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-  };
-
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className={`min-h-screen flex bg-background ${isExpanded ? "" : "overflow-hidden"}`}>
       {/* Sidebar */}
       <Sidebar 
         className={`border-r shadow-sm transition-all duration-300 ${
-          collapsed ? "w-[80px]" : "w-[250px]"
-        }`}
+          isExpanded ? (collapsed ? "w-[80px]" : "w-[250px]") : "w-0"
+        } ${(isHovering && collapsed) ? "!w-[250px]" : ""}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {/* Logo area */}
         <SidebarHeader className="flex justify-center py-4 relative">
           <div onClick={() => navigate("/dashboard")} className="flex items-center cursor-pointer px-2">
-            {!collapsed && (
+            {(!collapsed || isHovering) && (
               <>
                 <div className="flex items-center">
                   <img 
@@ -105,7 +131,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <div className="ml-2 text-xl font-semibold text-foreground">Kyureeus</div>
               </>
             )}
-            {collapsed && (
+            {collapsed && !isHovering && (
               <img 
                 src="/lovable-uploads/b4b49a49-4415-4608-919d-8c583dd41903.png" 
                 alt="Kyureeus Logo" 
@@ -113,24 +139,33 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               />
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-4"
-            onClick={toggleSidebar}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? <Menu className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-4"
+                  onClick={toggleSidebar}
+                  aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  <ChevronLeft className={`h-5 w-5 transition-transform ${collapsed ? "rotate-180" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </SidebarHeader>
 
         {/* User Profile */}
         <SidebarContent className="pt-4">
-          <div className={`flex ${collapsed ? "justify-center" : "flex-col items-center"} mb-6`}>
-            <Avatar className={`${collapsed ? "h-10 w-10" : "h-16 w-16"} border-2 border-primary transition-all duration-300`}>
+          <div className={`flex ${(collapsed && !isHovering) ? "justify-center" : "flex-col items-center"} mb-6`}>
+            <Avatar className={`${(collapsed && !isHovering) ? "h-10 w-10" : "h-16 w-16"} border-2 border-primary transition-all duration-300`}>
               <img src="/public/lovable-uploads/79b57a48-41b3-47a6-aba3-8cf20a45a438.png" alt="User" />
             </Avatar>
-            {!collapsed && (
+            {(!collapsed || isHovering) && (
               <h3 className="mt-2 font-medium text-sm">
                 {user?.name || 'Lisa Jackson'}
               </h3>
@@ -144,10 +179,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 isActive={isActive("/dashboard")} 
                 onClick={() => handleNavigation("/dashboard")}
                 className="hover:bg-sidebar-accent/70 transition-colors duration-200"
-                tooltip={collapsed ? "Dashboard" : undefined}
+                tooltip={collapsed && !isHovering ? "Dashboard" : undefined}
               >
                 <LayoutDashboard className="h-5 w-5 mr-3" />
-                {!collapsed && <span>Dashboard</span>}
+                {(!collapsed || isHovering) && <span>Dashboard</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -156,10 +191,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 isActive={isActive("/courses")} 
                 onClick={() => handleNavigation("/courses")}
                 className="hover:bg-sidebar-accent/70 transition-colors duration-200"
-                tooltip={collapsed ? "Courses" : undefined}
+                tooltip={collapsed && !isHovering ? "Courses" : undefined}
               >
                 <BookOpen className="h-5 w-5 mr-3" />
-                {!collapsed && <span>Courses</span>}
+                {(!collapsed || isHovering) && <span>Courses</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -168,10 +203,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 isActive={isActive("/quiz")} 
                 onClick={() => handleNavigation("/quiz")}
                 className="hover:bg-sidebar-accent/70 transition-colors duration-200"
-                tooltip={collapsed ? "Quizzes" : undefined}
+                tooltip={collapsed && !isHovering ? "Quizzes" : undefined}
               >
                 <BrainCircuit className="h-5 w-5 mr-3" />
-                {!collapsed && <span>Quizzes</span>}
+                {(!collapsed || isHovering) && <span>Quizzes</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -180,10 +215,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 isActive={isActive("/paths")} 
                 onClick={() => handleNavigation("/paths")}
                 className="hover:bg-sidebar-accent/70 transition-colors duration-200"
-                tooltip={collapsed ? "Learning Paths" : undefined}
+                tooltip={collapsed && !isHovering ? "Learning Paths" : undefined}
               >
                 <GraduationCap className="h-5 w-5 mr-3" />
-                {!collapsed && <span>Learning Paths</span>}
+                {(!collapsed || isHovering) && <span>Learning Paths</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -192,10 +227,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 isActive={isActive("/settings")} 
                 onClick={() => handleNavigation("/settings")}
                 className="hover:bg-sidebar-accent/70 transition-colors duration-200"
-                tooltip={collapsed ? "Settings" : undefined}
+                tooltip={collapsed && !isHovering ? "Settings" : undefined}
               >
                 <Settings className="h-5 w-5 mr-3" />
-                {!collapsed && <span>Settings</span>}
+                {(!collapsed || isHovering) && <span>Settings</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
 
@@ -204,10 +239,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 isActive={isActive("/help")} 
                 onClick={() => handleNavigation("/help")}
                 className="hover:bg-sidebar-accent/70 transition-colors duration-200"
-                tooltip={collapsed ? "Help" : undefined}
+                tooltip={collapsed && !isHovering ? "Help" : undefined}
               >
                 <HelpCircle className="h-5 w-5 mr-3" />
-                {!collapsed && <span>Help</span>}
+                {(!collapsed || isHovering) && <span>Help</span>}
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -215,19 +250,39 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         {/* Footer with theme toggle and logout */}
         <SidebarFooter className="mt-auto border-t border-border pt-4 pb-6">
-          <div className={`${collapsed ? "flex justify-center" : "px-4 flex justify-between"}`}>
-            {!collapsed && (
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={toggleTheme}
-                aria-label="Toggle theme"
-              >
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-            )}
+          <div className={`${(collapsed && !isHovering) ? "flex justify-center" : "px-4 flex justify-between"}`}>
+            <div className="flex items-center gap-2">
+              {(!collapsed || isHovering) && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={toggleTheme}
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+              )}
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={toggleFullExpand}
+                      aria-label={isExpanded ? "Minimize sidebar" : "Maximize sidebar"}
+                    >
+                      {isExpanded ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    {isExpanded ? "Minimize sidebar" : "Maximize sidebar"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             
-            {collapsed ? (
+            {(collapsed && !isHovering) ? (
               <Button 
                 variant="ghost" 
                 size="icon"

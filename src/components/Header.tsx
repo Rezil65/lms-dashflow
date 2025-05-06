@@ -42,7 +42,7 @@ const Header = () => {
             <img 
               src="/lovable-uploads/b4b49a49-4415-4608-919d-8c583dd41903.png" 
               alt="Kyureeus Logo" 
-              className="h-8"
+              className="h-8 hover:opacity-80 transition-opacity"
             />
           </div>
           <div>
