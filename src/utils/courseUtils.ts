@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Course {
-  id: string;
+  id: string; // Changed from string to match the database schema
   title: string;
   description: string;
   thumbnail_url?: string;

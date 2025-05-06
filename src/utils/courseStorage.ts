@@ -19,7 +19,7 @@ export interface Lesson {
 }
 
 export interface Course {
-  id: number;
+  id: string; // Changed from number to string to match database schema
   title: string;
   description: string;
   thumbnail?: string;
@@ -30,7 +30,7 @@ export interface Course {
   updatedAt?: string;
   modules?: Module[];
   embedContent?: EmbedData[];
-  level?: 'beginner' | 'intermediate' | 'advanced';
+  level?: 'beginner' | 'intermediate' | 'advanced' | string; // Added string to match database values
   price?: number;
   isFeatured?: boolean;
   tags?: string[];
@@ -63,7 +63,7 @@ export const getCourses = async (): Promise<Course[]> => {
 };
 
 // Get a specific course by ID with its modules and lessons
-export const getCourse = async (id: number): Promise<Course | null> => {
+export const getCourse = async (id: string): Promise<Course | null> => {
   // Fetch the course
   const { data: courseData, error: courseError } = await supabase
     .from('courses')
@@ -245,7 +245,7 @@ export const updateCourse = async (updatedCourse: Course): Promise<Course | null
 };
 
 // Delete a course
-export const deleteCourse = async (id: number): Promise<boolean> => {
+export const deleteCourse = async (id: string): Promise<boolean> => {
   const { error } = await supabase
     .from('courses')
     .delete()
@@ -260,7 +260,7 @@ export const deleteCourse = async (id: number): Promise<boolean> => {
 };
 
 // Add a module to a course
-export const addModuleToCourse = async (courseId: number, module: Omit<Module, 'id'>): Promise<Module | null> => {
+export const addModuleToCourse = async (courseId: string, module: Omit<Module, 'id'>): Promise<Module | null> => {
   const { data, error } = await supabase
     .from('modules')
     .insert({
@@ -286,7 +286,7 @@ export const addModuleToCourse = async (courseId: number, module: Omit<Module, '
 };
 
 // Helper to get the next sort order for modules
-const getNextModuleSortOrder = async (courseId: number): Promise<number> => {
+const getNextModuleSortOrder = async (courseId: string): Promise<number> => {
   const { data } = await supabase
     .from('modules')
     .select('sort_order')
@@ -298,7 +298,7 @@ const getNextModuleSortOrder = async (courseId: number): Promise<number> => {
 };
 
 // Update a module in a course
-export const updateCourseModule = async (courseId: number, updatedModule: Module): Promise<Module | null> => {
+export const updateCourseModule = async (courseId: string, updatedModule: Module): Promise<Module | null> => {
   const { error } = await supabase
     .from('modules')
     .update({
@@ -316,7 +316,7 @@ export const updateCourseModule = async (courseId: number, updatedModule: Module
 };
 
 // Delete a module from a course
-export const deleteCourseModule = async (courseId: number, moduleId: string): Promise<boolean> => {
+export const deleteCourseModule = async (courseId: string, moduleId: string): Promise<boolean> => {
   const { error } = await supabase
     .from('modules')
     .delete()
