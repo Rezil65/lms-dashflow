@@ -17,8 +17,8 @@ import {
   Award,
   BarChart3,
   AlertTriangle,
-  Maximize2,
-  Minimize2
+  Maximize,
+  Minimize
 } from "lucide-react";
 
 export interface QuizQuestion {
@@ -403,7 +403,7 @@ export const SuperQuizPlayer: React.FC<SuperQuizPlayerProps> = ({
                 size="sm"
                 onClick={toggleFullscreen}
               >
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
               </Button>
             </div>
           </div>

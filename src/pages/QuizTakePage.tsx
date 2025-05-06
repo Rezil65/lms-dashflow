@@ -6,7 +6,6 @@ import { Card } from "@/components/ui/card";
 import { useQuiz } from "@/hooks/use-quiz";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { QuizQuestion as QuizQuestionType } from "@/hooks/use-quiz";
 import { SuperQuizPlayer } from "@/components/quiz/SuperQuizPlayer";
 
 const QuizTakePage = () => {
@@ -121,6 +120,18 @@ const QuizTakePage = () => {
   };
 
   const quizToShow = quiz || demoQuiz;
+  
+  // Transform quiz questions to match SuperQuizPlayer expected format if needed
+  const transformedQuestions = quizToShow.questions.map((question: any) => ({
+    id: question.id,
+    question: question.question,
+    type: question.type,
+    options: question.options.map((option: any) => ({
+      id: option.id || String(Math.random()), // Ensure id is always present
+      text: option.text,
+      isCorrect: option.isCorrect
+    }))
+  }));
 
   return (
     <DashboardLayout>
@@ -144,7 +155,7 @@ const QuizTakePage = () => {
           <SuperQuizPlayer 
             title={quizToShow.title}
             description={quizToShow.description}
-            questions={quizToShow.questions as QuizQuestionType[]}
+            questions={transformedQuestions}
             timeLimit={quizToShow.questions.length * 30} // 30 seconds per question
             onComplete={handleQuizComplete}
             preventCheating={true}
