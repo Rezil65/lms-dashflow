@@ -33,19 +33,10 @@ const App = () => (
       <Sonner />
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />
         
         {/* Protected routes */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <Navigate to="/dashboard" replace />
-            </ProtectedRoute>
-          } 
-        />
-        
-        {/* Modern Dashboard */}
         <Route 
           path="/dashboard" 
           element={

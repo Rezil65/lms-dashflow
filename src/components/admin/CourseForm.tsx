@@ -7,6 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Course } from '@/utils/courseUtils';
+import { useForm } from 'react-hook-form';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// Define a schema for course validation
+const courseSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  level: z.string().optional(),
+  price: z.number().min(0, "Price must be a positive number"),
+  duration: z.string().optional(),
+  thumbnail_url: z.string().optional(),
+  is_featured: z.boolean().optional(),
+});
 
 interface CourseFormProps {
   initialCourse?: Course;
@@ -16,7 +32,8 @@ interface CourseFormProps {
 }
 
 const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = false }: CourseFormProps) => {
-  const [course, setCourse] = useState<Course>(initialCourse || {
+  // Convert the initialCourse to match the form structure
+  const defaultValues = initialCourse || {
     id: "",
     title: "",
     description: "",
@@ -26,27 +43,22 @@ const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = fals
     duration: "",
     thumbnail_url: "",
     is_featured: false
-  } as Course);
+  } as Course;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCourse({
-      ...course,
-      [name]: value
-    });
-  };
+  const form = useForm({
+    resolver: zodResolver(courseSchema),
+    defaultValues
+  });
 
-  const handleSelectChange = (name: string, value: string) => {
-    setCourse({
-      ...course,
-      [name]: value
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(course);
-  };
+  const handleSubmit = form.handleSubmit((data) => {
+    // Preserve the id if we're editing
+    const courseData = {
+      ...data,
+      id: initialCourse?.id || "",
+    } as Course;
+    
+    onSave(courseData);
+  });
 
   return (
     <Card>
@@ -54,110 +66,154 @@ const CourseForm = ({ initialCourse, onSave, isLoading = false, isEditing = fals
         <CardTitle>{isEditing ? 'Edit Course' : 'Create New Course'}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Course Title</Label>
-            <Input 
-              id="title" 
-              name="title" 
-              value={course.title} 
-              onChange={handleInputChange} 
-              placeholder="Enter course title"
-              required
+        <Form {...form}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Course Title</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter course title"
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description">Course Description</Label>
-            <Textarea 
-              id="description" 
-              name="description" 
-              value={course.description} 
-              onChange={handleInputChange} 
-              placeholder="Describe your course"
-              rows={5}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select 
-                value={course.category || ''} 
-                onValueChange={(value) => handleSelectChange('category', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="programming">Programming</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                  <SelectItem value="personal-development">Personal Development</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="level">Level</Label>
-              <Select 
-                value={course.level || ''} 
-                onValueChange={(value) => handleSelectChange('level', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price ($)</Label>
-              <Input 
-                id="price" 
-                name="price" 
-                type="number" 
-                value={course.price || 0} 
-                onChange={handleInputChange}
-                min={0}
-                step={0.01}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Course Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Describe your course"
+                      rows={5}
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="programming">Programming</SelectItem>
+                        <SelectItem value="design">Design</SelectItem>
+                        <SelectItem value="business">Business</SelectItem>
+                        <SelectItem value="marketing">Marketing</SelectItem>
+                        <SelectItem value="personal-development">Personal Development</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Level</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="advanced">Advanced</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duration</Label>
-              <Input 
-                id="duration" 
-                name="duration" 
-                value={course.duration || ''} 
-                onChange={handleInputChange} 
-                placeholder="e.g. 2 hours 30 minutes"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min={0}
+                        step={0.01}
+                        {...field}
+                        onChange={e => field.onChange(parseFloat(e.target.value))}
+                        value={field.value}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="duration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Duration</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="e.g. 2 hours 30 minutes"
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-            <Input 
-              id="thumbnail_url" 
-              name="thumbnail_url" 
-              value={course.thumbnail_url || ''} 
-              onChange={handleInputChange} 
-              placeholder="Enter image URL for course thumbnail"
+            
+            <FormField
+              control={form.control}
+              name="thumbnail_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Thumbnail URL</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter image URL for course thumbnail"
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Saving...' : (isEditing ? 'Update Course' : 'Create Course')}
-          </Button>
-        </form>
+            
+            <Button type="submit" className="w-full hover:scale-105 transition-transform button-3d" disabled={isLoading}>
+              {isLoading ? 'Saving...' : (isEditing ? 'Update Course' : 'Create Course')}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

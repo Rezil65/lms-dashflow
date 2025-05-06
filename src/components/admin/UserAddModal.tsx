@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 // Define the validation schema
