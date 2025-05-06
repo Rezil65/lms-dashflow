@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ResourceUploaderProps {
-  courseId: number;
+  courseId: string;
   onResourceAdded: (resource: Resource) => void;
 }
 

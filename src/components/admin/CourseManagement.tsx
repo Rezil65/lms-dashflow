@@ -1,8 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import QuizManager from "@/components/QuizManager";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,20 +9,30 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, Edit, Trash2, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { getCourses, deleteCourse, Course } from "@/utils/courseStorage";
 import { useToast } from "@/hooks/use-toast";
 import CreateCourseButton from "../CreateCourseButton";
+import { getCourses, deleteCourse } from "@/utils/courseUtils";
+import { QuizManager } from "../Quiz";
 
 const CourseManagement = () => {
   const [activeTab, setActiveTab] = useState("courses");
-  const [courses, setCourses] = useState<Course[]>(getCourses());
+  const [courses, setCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const handleSaveQuizzes = (quizzes: any[]) => {
+  useEffect(() => {
+    loadCourses();
+  }, []);
+  
+  const loadCourses = async () => {
+    const coursesData = await getCourses();
+    setCourses(coursesData);
+  };
+  
+  const handleSaveQuizzes = (quizzes) => {
     console.log("Saved quizzes:", quizzes);
     toast({
       title: "Quizzes Saved",
@@ -32,28 +41,36 @@ const CourseManagement = () => {
     // In a real app, you would save these to your backend
   };
   
-  const handleEditCourse = (course: Course) => {
+  const handleEditCourse = (course) => {
     navigate(`/course/${course.id}/content`);
   };
   
-  const handleViewCourse = (course: Course) => {
+  const handleViewCourse = (course) => {
     navigate(`/course/${course.id}`);
   };
   
-  const handleDeleteCourse = (course: Course) => {
+  const handleDeleteCourse = (course) => {
     setSelectedCourse(course);
     setDeleteDialogOpen(true);
   };
   
-  const confirmDeleteCourse = () => {
+  const confirmDeleteCourse = async () => {
     if (selectedCourse) {
-      deleteCourse(selectedCourse.id);
-      setCourses(getCourses());
-      setDeleteDialogOpen(false);
-      toast({
-        title: "Course Deleted",
-        description: `"${selectedCourse.title}" has been deleted.`
-      });
+      const success = await deleteCourse(selectedCourse.id);
+      if (success) {
+        await loadCourses();
+        setDeleteDialogOpen(false);
+        toast({
+          title: "Course Deleted",
+          description: `"${selectedCourse.title}" has been deleted.`
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete course.",
+          variant: "destructive"
+        });
+      }
     }
   };
   

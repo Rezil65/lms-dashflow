@@ -56,7 +56,7 @@ export function useQuiz() {
       const quizzes: Quiz[] = [];
       
       // For each quiz, get its questions and options
-      for (const quiz of quizData) {
+      for (const quiz of quizData || []) {
         const { data: questionsData, error: questionsError } = await supabase
           .from('quiz_questions')
           .select('*')
@@ -67,7 +67,7 @@ export function useQuiz() {
         
         const questions: QuizQuestion[] = [];
         
-        for (const question of questionsData) {
+        for (const question of questionsData || []) {
           const { data: optionsData, error: optionsError } = await supabase
             .from('quiz_options')
             .select('*')
@@ -79,7 +79,7 @@ export function useQuiz() {
           questions.push({
             id: question.id,
             question: question.question,
-            options: optionsData.map(option => ({
+            options: (optionsData || []).map(option => ({
               id: option.id,
               text: option.text,
               isCorrect: option.is_correct
@@ -138,7 +138,7 @@ export function useQuiz() {
       
       const questions: QuizQuestion[] = [];
       
-      for (const question of questionsData) {
+      for (const question of questionsData || []) {
         const { data: optionsData, error: optionsError } = await supabase
           .from('quiz_options')
           .select('*')
@@ -150,7 +150,7 @@ export function useQuiz() {
         questions.push({
           id: question.id,
           question: question.question,
-          options: optionsData.map(option => ({
+          options: (optionsData || []).map(option => ({
             id: option.id,
             text: option.text,
             isCorrect: option.is_correct
@@ -321,7 +321,7 @@ export function useQuiz() {
         
       if (error) throw error;
       
-      return data.map(result => ({
+      return (data || []).map(result => ({
         id: result.id,
         userId: result.user_id,
         quizId: result.quiz_id,

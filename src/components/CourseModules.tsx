@@ -5,19 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ChevronRight, BookOpen, ArrowRight, CheckCircle, Video, BookOpenCheck, FileText, ChevronDown, File, ExternalLink, Minimize, X, Maximize } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Course, getCourseById } from "@/utils/courseStorage";
-import { Module } from "@/components/ModuleEditor";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import QuizTaker from "./QuizTaker";
+import QuizTaker from "./Quiz/QuizTaker";
+import { getCourseById, Course, Module, Lesson } from "@/utils/courseUtils";
 
 interface CourseModulesProps {
   isPreview?: boolean;
@@ -52,8 +46,7 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
       setLoading(true);
       
       try {
-        const parsedCourseId = parseInt(courseId);
-        const foundCourse = getCourseById(parsedCourseId);
+        const foundCourse = await getCourseById(courseId);
         
         if (foundCourse) {
           setCourse(foundCourse);
@@ -121,7 +114,18 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                 { id: "opt2", text: "JavaScript can manipulate HTML elements", isCorrect: true },
                 { id: "opt3", text: "JavaScript is statically typed", isCorrect: false },
               ],
-              courseId: "1"
+              courseId: "1",
+              questions: [
+                {
+                  id: "q1",
+                  question: "What is JavaScript?",
+                  options: [
+                    { id: "opt1", text: "JavaScript is a server-side language", isCorrect: false },
+                    { id: "opt2", text: "JavaScript can manipulate HTML elements", isCorrect: true },
+                    { id: "opt3", text: "JavaScript is statically typed", isCorrect: false },
+                  ]
+                }
+              ]
             }
           }
         ]

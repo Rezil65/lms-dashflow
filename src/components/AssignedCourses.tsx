@@ -2,16 +2,34 @@
 import { useEffect, useState } from "react";
 import { Book, Clock, Eye, PlayCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getCourses, Course } from "@/utils/courseStorage";
 import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 import { Card, CardContent } from "./ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail?: string;
+  thumbnail_url?: string;
+  duration?: string;
+  lessonCount?: number;
+  isFeatured?: boolean;
+  price?: number;
+  embedContent?: any[];
+}
 
 const CourseItem = ({ course }: { course: Course }) => {
   const navigate = useNavigate();
-  const [showDialog, setShowDialog] = useState(false);
-  const progress = Math.floor(Math.random() * 100); // In a real app, this would come from user progress data
+  const [progress, setProgress] = useState(0);
+  
+  useEffect(() => {
+    // In a real implementation, fetch actual progress for this course
+    setProgress(Math.floor(Math.random() * 100));
+  }, [course.id]);
   
   const handleCourseClick = () => {
     navigate(`/course/${course.id}/content`);
@@ -32,9 +50,9 @@ const CourseItem = ({ course }: { course: Course }) => {
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="w-full sm:w-32 h-24 rounded bg-muted/50 flex items-center justify-center overflow-hidden">
-            {course.thumbnail ? (
+            {(course.thumbnail || course.thumbnail_url) ? (
               <img 
-                src={course.thumbnail} 
+                src={course.thumbnail || course.thumbnail_url} 
                 alt={course.title} 
                 className="w-full h-full object-cover"
               />
@@ -75,9 +93,9 @@ const CourseItem = ({ course }: { course: Course }) => {
                     </DialogHeader>
                     <div className="space-y-4 mt-2">
                       <div className="aspect-video bg-muted/50 rounded-md overflow-hidden flex items-center justify-center">
-                        {course.thumbnail ? (
+                        {(course.thumbnail || course.thumbnail_url) ? (
                           <img 
-                            src={course.thumbnail} 
+                            src={course.thumbnail || course.thumbnail_url} 
                             alt={course.title} 
                             className="w-full h-full object-cover" 
                           />
@@ -169,30 +187,59 @@ const CourseItem = ({ course }: { course: Course }) => {
 
 const AssignedCourses = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
-    // In a real app, we would fetch only courses assigned to the current user
-    // For now, we'll just display all courses as if they were assigned
     loadCourses();
     
-    // Listen for course added event
-    window.addEventListener('courseAdded', loadCourses);
-    
+    // Set up a subscription for real-time updates
+    const channel = supabase
+      .channel('courses-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'courses' },
+        () => {
+          // Reload courses when there's a change
+          loadCourses();
+        }
+      )
+      .subscribe();
+      
     return () => {
-      window.removeEventListener('courseAdded', loadCourses);
+      supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
   
-  const loadCourses = () => {
-    const allCourses = getCourses();
-    setCourses(allCourses);
+  const loadCourses = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-semibold">Assigned Courses</h2>
       <div className="space-y-4">
-        {courses.length > 0 ? (
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-lg"></div>
+            ))}
+          </div>
+        ) : courses.length > 0 ? (
           courses.map((course) => (
             <CourseItem key={course.id} course={course} />
           ))

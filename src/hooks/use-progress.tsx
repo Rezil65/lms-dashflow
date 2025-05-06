@@ -8,6 +8,7 @@ interface CourseProgress {
   progress: number;
   lastAccessed: string;
   completed: boolean;
+  courseDetails?: any;
 }
 
 export function useProgress() {

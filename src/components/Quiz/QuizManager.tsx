@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import QuizTaker from "./QuizTaker";
-import { useQuiz, Quiz as QuizType } from "@/hooks/use-quiz";
+import { useQuiz, Quiz as QuizType, QuizQuestion } from "@/hooks/use-quiz";
 
 export interface QuizOption {
   id: string;
@@ -38,9 +37,10 @@ export interface Quiz {
 
 interface QuizManagerProps {
   courseId?: string;
+  onSaveQuizzes?: (quizzes: any[]) => void;
 }
 
-const QuizManager = ({ courseId }: QuizManagerProps) => {
+const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
   const { toast } = useToast();
   const { getQuizzesByCourse, createQuiz, loading } = useQuiz();
   const [quizzes, setQuizzes] = useState<QuizType[]>([]);
@@ -59,7 +59,7 @@ const QuizManager = ({ courseId }: QuizManagerProps) => {
   const [newQuizTitle, setNewQuizTitle] = useState("");
   const [newQuizDescription, setNewQuizDescription] = useState("");
   const [newQuizQuestions, setNewQuizQuestions] = useState<
-    { question: string; type: "single-choice" | "multiple-choice"; options: { text: string; isCorrect: boolean }[] }[]
+    { question: string; options: { text: string; isCorrect: boolean }[]; id?: string }[]
   >([]);
 
   useEffect(() => {
@@ -136,6 +136,7 @@ const QuizManager = ({ courseId }: QuizManagerProps) => {
     setNewQuizQuestions([
       ...newQuizQuestions,
       {
+        id: `temp-${Date.now()}`, // Add temporary ID
         question: newQuestion,
         type: questionType,
         options: [...options],
@@ -180,8 +181,10 @@ const QuizManager = ({ courseId }: QuizManagerProps) => {
         description: newQuizDescription,
         courseId,
         questions: newQuizQuestions.map(q => ({
+          id: q.id || `temp-${Date.now()}`, // Use temp ID if no ID present
           question: q.question,
           options: q.options.map((opt, idx) => ({
+            id: `temp-opt-${idx}-${Date.now()}`, // Add temporary ID for options
             text: opt.text,
             isCorrect: opt.isCorrect,
           })),
