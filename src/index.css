@@ -46,6 +46,45 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215.3 25.2% 26.4%;
+    --sidebar-ring: 224.3 76.3% 48%;
+  }
 }
 
 @layer base {
@@ -121,5 +160,22 @@
   
   .fullscreen-active {
     @apply fixed inset-0 w-full h-full z-50 bg-black flex items-center justify-center p-4;
+  }
+
+  /* Sidebar menu animations */
+  .sidebar-menu-item {
+    @apply relative overflow-hidden;
+  }
+
+  .sidebar-menu-item::after {
+    @apply content-[''] absolute bottom-0 left-0 w-full h-0.5 bg-primary transform scale-x-0 origin-left transition-transform duration-300;
+  }
+
+  .sidebar-menu-item:hover::after {
+    @apply scale-x-100;
+  }
+  
+  .sidebar-menu-item.active::after {
+    @apply scale-x-100;
   }
 }
