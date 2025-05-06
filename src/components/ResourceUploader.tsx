@@ -7,6 +7,7 @@ import FileUploader from "@/components/FileUploader";
 import { toast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResourceUploaderProps {
   courseId: number;
@@ -35,7 +36,7 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
     }
   };
   
-  const handleUploadComplete = () => {
+  const handleUploadComplete = async () => {
     if (!currentFile || !resourceName.trim()) {
       toast({
         title: "Missing information",
@@ -47,23 +48,58 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
     
     setUploading(true);
     
-    // In a real app, this would upload to a server
-    // For now, we'll simulate it with a timeout
-    setTimeout(() => {
-      const newResource: Resource = {
-        id: Math.random().toString(36).substring(2, 9),
-        name: resourceName,
-        type: currentFile.type || getFileTypeFromExtension(currentFile.name),
-        size: currentFile.size,
-        url: URL.createObjectURL(currentFile),
-        dateAdded: new Date().toISOString()
-      };
+    try {
+      // Get the current authenticated user
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        throw new Error("You must be logged in to upload resources");
+      }
+
+      // Upload file to Supabase Storage
+      const fileExt = currentFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const filePath = `${courseId}/${fileName}`;
       
-      // Save to localStorage
-      const storageKey = `course-${courseId}-resources`;
-      const existingResources = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      const updatedResources = [...existingResources, newResource];
-      localStorage.setItem(storageKey, JSON.stringify(updatedResources));
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('course_resources')
+        .upload(filePath, currentFile);
+        
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: urlData } = supabase.storage
+        .from('course_resources')
+        .getPublicUrl(filePath);
+      
+      // Save resource metadata to the resources table
+      const { data: resourceData, error: resourceError } = await supabase
+        .from('resources')
+        .insert({
+          course_id: courseId,
+          name: resourceName,
+          type: currentFile.type || getFileTypeFromExtension(currentFile.name),
+          size: currentFile.size,
+          url: urlData.publicUrl,
+          created_by: userData.user.id
+        })
+        .select()
+        .single();
+        
+      if (resourceError) {
+        throw resourceError;
+      }
+      
+      // Format the resource for the callback
+      const newResource: Resource = {
+        id: resourceData.id,
+        name: resourceData.name,
+        type: resourceData.type,
+        size: resourceData.size,
+        url: resourceData.url,
+        dateAdded: resourceData.created_at
+      };
       
       onResourceAdded(newResource);
       
@@ -76,7 +112,15 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
         title: "Resource Added",
         description: `${resourceName} has been added to course resources.`,
       });
-    }, 1500);
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "There was an error uploading your resource.",
+        variant: "destructive"
+      });
+      setUploading(false);
+    }
   };
   
   const getFileTypeFromExtension = (filename: string): string => {

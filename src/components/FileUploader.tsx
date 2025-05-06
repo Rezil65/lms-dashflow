@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { UploadCloud, X, FileText, Image, Video, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,9 +7,16 @@ import { toast } from "@/components/ui/use-toast";
 interface FileUploaderProps {
   onFileUploaded?: (file: File) => void;
   buttonText?: string;
+  maxSize?: number; // in MB
+  acceptedFileTypes?: string[];
 }
 
-const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploaderProps) => {
+const FileUploader = ({ 
+  onFileUploaded, 
+  buttonText = "Browse Files",
+  maxSize = 10, // Default 10MB
+  acceptedFileTypes = ["image/*", "video/*", ".pdf", ".doc", ".docx", ".html", ".csv", ".xls", ".xlsx"]
+}: FileUploaderProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -32,7 +40,52 @@ const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploa
     setIsDragging(true);
   };
   
+  const validateFile = (file: File): boolean => {
+    // Check file size
+    if (file.size > maxSize * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: `File size should not exceed ${maxSize}MB.`,
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    // Check file type if acceptedFileTypes is provided
+    if (acceptedFileTypes.length > 0) {
+      const fileExt = `.${file.name.split('.').pop()?.toLowerCase()}`;
+      const isAcceptedType = acceptedFileTypes.some(type => {
+        if (type.startsWith('.')) {
+          // Handle extension match
+          return fileExt === type.toLowerCase();
+        } else if (type.includes('*')) {
+          // Handle wildcard MIME type match
+          const [category] = type.split('/');
+          return file.type.startsWith(category);
+        } else {
+          // Handle exact MIME type match
+          return file.type === type;
+        }
+      });
+      
+      if (!isAcceptedType) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a file with an allowed format.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  };
+  
   const processFile = (file: File) => {
+    if (!validateFile(file)) {
+      return;
+    }
+    
     setSelectedFile(file);
     
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
@@ -70,10 +123,12 @@ const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploa
       const file = e.dataTransfer.files[0];
       processFile(file);
       
-      toast({
-        title: "File Added",
-        description: `${file.name} has been added.`,
-      });
+      if (validateFile(file)) {
+        toast({
+          title: "File Added",
+          description: `${file.name} has been added.`,
+        });
+      }
     }
   };
   
@@ -82,14 +137,19 @@ const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploa
       const file = e.target.files[0];
       processFile(file);
       
-      toast({
-        title: "File Added",
-        description: `${file.name} has been added.`,
-      });
+      if (validateFile(file)) {
+        toast({
+          title: "File Added",
+          description: `${file.name} has been added.`,
+        });
+      }
     }
   };
   
   const handleRemoveFile = () => {
+    if (preview && (fileType === 'image' || fileType === 'video')) {
+      URL.revokeObjectURL(preview);
+    }
     setSelectedFile(null);
     setPreview(null);
     setFileType(null);
@@ -129,7 +189,7 @@ const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploa
               </p>
             </div>
             <div className="mt-2 text-xs text-muted-foreground">
-              Supports images, videos, documents, and more
+              Supports images, videos, documents (max {maxSize}MB)
             </div>
             <Button variant="outline" size="sm" className="mt-2" asChild>
               <label className="cursor-pointer">
@@ -138,7 +198,7 @@ const FileUploader = ({ onFileUploaded, buttonText = "Browse Files" }: FileUploa
                   type="file"
                   className="hidden"
                   onChange={handleFileChange}
-                  accept="image/*,video/*,.pdf,.doc,.docx,.html,.csv,.xls,.xlsx"
+                  accept={acceptedFileTypes.join(',')}
                 />
               </label>
             </Button>

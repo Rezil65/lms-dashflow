@@ -1,5 +1,6 @@
 
 import { EmbedData } from "@/components/ContentEmbedder";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Module {
   id: string;
@@ -35,145 +36,379 @@ export interface Course {
   tags?: string[];
 }
 
-// Get courses from local storage
-export const getCourses = (): Course[] => {
-  const storedCourses = localStorage.getItem('courses');
-  if (storedCourses) {
-    return JSON.parse(storedCourses);
+// Get courses from Supabase
+export const getCourses = async (): Promise<Course[]> => {
+  const { data, error } = await supabase.from('courses').select('*');
+  
+  if (error) {
+    console.error('Error fetching courses:', error);
+    return [];
   }
-  return [];
+  
+  // Transform the data to match the Course interface
+  return data.map(course => ({
+    id: course.id,
+    title: course.title,
+    description: course.description,
+    thumbnail: course.thumbnail_url,
+    category: course.category,
+    duration: course.duration,
+    createdAt: course.created_at,
+    updatedAt: course.updated_at,
+    level: course.level,
+    price: course.price,
+    isFeatured: course.is_featured,
+    tags: course.tags
+  }));
 };
 
-// Get a specific course by ID
-export const getCourse = (id: number): Course | null => {
-  const courses = getCourses();
-  return courses.find(course => course.id === id) || null;
+// Get a specific course by ID with its modules and lessons
+export const getCourse = async (id: number): Promise<Course | null> => {
+  // Fetch the course
+  const { data: courseData, error: courseError } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (courseError || !courseData) {
+    console.error('Error fetching course:', courseError);
+    return null;
+  }
+  
+  // Fetch the modules for this course
+  const { data: modulesData, error: modulesError } = await supabase
+    .from('modules')
+    .select('*')
+    .eq('course_id', id)
+    .order('sort_order', { ascending: true });
+  
+  if (modulesError) {
+    console.error('Error fetching modules:', modulesError);
+    return null;
+  }
+  
+  // Prepare course with empty modules array
+  const course: Course = {
+    id: courseData.id,
+    title: courseData.title,
+    description: courseData.description,
+    thumbnail: courseData.thumbnail_url,
+    category: courseData.category,
+    duration: courseData.duration,
+    createdAt: courseData.created_at,
+    updatedAt: courseData.updated_at,
+    level: courseData.level,
+    price: courseData.price,
+    isFeatured: courseData.is_featured,
+    tags: courseData.tags,
+    modules: []
+  };
+  
+  // If there are modules, fetch lessons for each
+  if (modulesData && modulesData.length > 0) {
+    // Create modules array with empty lessons
+    course.modules = modulesData.map(module => ({
+      id: module.id,
+      title: module.title,
+      description: module.description || '',
+      lessons: []
+    }));
+    
+    // Fetch all lessons for all modules in one query
+    const moduleIds = modulesData.map(module => module.id);
+    const { data: lessonsData, error: lessonsError } = await supabase
+      .from('lessons')
+      .select('*')
+      .in('module_id', moduleIds)
+      .order('sort_order', { ascending: true });
+    
+    if (lessonsError) {
+      console.error('Error fetching lessons:', lessonsError);
+    } else if (lessonsData) {
+      // Populate lessons into their respective modules
+      lessonsData.forEach(lesson => {
+        const moduleIndex = course.modules!.findIndex(m => m.id === lesson.module_id);
+        if (moduleIndex !== -1) {
+          course.modules![moduleIndex].lessons.push({
+            id: lesson.id,
+            title: lesson.title,
+            content: lesson.content || '',
+            type: lesson.type || 'text',
+            duration: lesson.duration || '0 min',
+            embedData: lesson.embed_url ? {
+              type: 'video',
+              url: lesson.embed_url,
+              title: lesson.title
+            } : undefined
+          });
+        }
+      });
+    }
+  }
+  
+  return course;
 };
 
 // Alias for getCourse for compatibility
 export const getCourseById = getCourse;
 
 // Get total course count
-export const getTotalCourseCount = (): number => {
-  return getCourses().length;
+export const getTotalCourseCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('courses')
+    .select('*', { count: 'exact', head: true });
+  
+  if (error) {
+    console.error('Error counting courses:', error);
+    return 0;
+  }
+  
+  return count || 0;
 };
 
 // Add a new course
-export const addCourse = (course: Omit<Course, 'id' | 'createdAt'>): Course => {
-  const courses = getCourses();
+export const addCourse = async (course: Omit<Course, 'id' | 'createdAt'>): Promise<Course | null> => {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
   
-  // Generate a unique ID
-  const id = Date.now();
+  if (userError || !userData.user) {
+    console.error('User must be logged in to add a course', userError);
+    return null;
+  }
   
-  const newCourse: Course = {
-    ...course,
-    id,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+  const { data, error } = await supabase
+    .from('courses')
+    .insert({
+      title: course.title,
+      description: course.description,
+      thumbnail_url: course.thumbnail,
+      category: course.category,
+      duration: course.duration,
+      level: course.level,
+      price: course.price,
+      is_featured: course.isFeatured || false,
+      tags: course.tags,
+      created_by: userData.user.id
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error adding course:', error);
+    return null;
+  }
+  
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    thumbnail: data.thumbnail_url,
+    category: data.category,
+    duration: data.duration,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    level: data.level,
+    price: data.price,
+    isFeatured: data.is_featured,
+    tags: data.tags,
+    modules: []
   };
-  
-  courses.push(newCourse);
-  localStorage.setItem('courses', JSON.stringify(courses));
-  
-  return newCourse;
 };
 
 // Save a course (alias for addCourse for compatibility)
-export const saveCourse = (courseData: Omit<Course, 'id' | 'createdAt'>): Course => {
-  return addCourse(courseData);
-};
+export const saveCourse = addCourse;
 
 // Update an existing course
-export const updateCourse = (updatedCourse: Course): Course => {
-  const courses = getCourses();
-  const index = courses.findIndex(course => course.id === updatedCourse.id);
+export const updateCourse = async (updatedCourse: Course): Promise<Course | null> => {
+  const { error } = await supabase
+    .from('courses')
+    .update({
+      title: updatedCourse.title,
+      description: updatedCourse.description,
+      thumbnail_url: updatedCourse.thumbnail,
+      category: updatedCourse.category,
+      duration: updatedCourse.duration,
+      level: updatedCourse.level,
+      price: updatedCourse.price,
+      is_featured: updatedCourse.isFeatured,
+      tags: updatedCourse.tags,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', updatedCourse.id);
   
-  if (index === -1) {
-    throw new Error(`Course with ID ${updatedCourse.id} not found`);
+  if (error) {
+    console.error('Error updating course:', error);
+    return null;
   }
   
-  courses[index] = {
-    ...updatedCourse,
-    updatedAt: new Date().toISOString()
-  };
-  
-  localStorage.setItem('courses', JSON.stringify(courses));
-  return courses[index];
+  return updatedCourse;
 };
 
 // Delete a course
-export const deleteCourse = (id: number): void => {
-  const courses = getCourses();
-  const updatedCourses = courses.filter(course => course.id !== id);
-  localStorage.setItem('courses', JSON.stringify(updatedCourses));
+export const deleteCourse = async (id: number): Promise<boolean> => {
+  const { error } = await supabase
+    .from('courses')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting course:', error);
+    return false;
+  }
+  
+  return true;
 };
 
 // Add a module to a course
-export const addModuleToCourse = (courseId: number, module: Omit<Module, 'id'>): Module => {
-  const courses = getCourses();
-  const courseIndex = courses.findIndex(course => course.id === courseId);
+export const addModuleToCourse = async (courseId: number, module: Omit<Module, 'id'>): Promise<Module | null> => {
+  const { data, error } = await supabase
+    .from('modules')
+    .insert({
+      course_id: courseId,
+      title: module.title,
+      description: module.description,
+      sort_order: (await getNextModuleSortOrder(courseId))
+    })
+    .select()
+    .single();
   
-  if (courseIndex === -1) {
-    throw new Error(`Course with ID ${courseId} not found`);
+  if (error) {
+    console.error('Error adding module:', error);
+    return null;
   }
   
-  const newModule: Module = {
-    ...module,
-    id: Date.now().toString(),
-    lessons: module.lessons || []
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    lessons: []
   };
+};
+
+// Helper to get the next sort order for modules
+const getNextModuleSortOrder = async (courseId: number): Promise<number> => {
+  const { data } = await supabase
+    .from('modules')
+    .select('sort_order')
+    .eq('course_id', courseId)
+    .order('sort_order', { ascending: false })
+    .limit(1);
   
-  if (!courses[courseIndex].modules) {
-    courses[courseIndex].modules = [];
-  }
-  
-  courses[courseIndex].modules?.push(newModule);
-  courses[courseIndex].updatedAt = new Date().toISOString();
-  localStorage.setItem('courses', JSON.stringify(courses));
-  
-  return newModule;
+  return data && data.length > 0 ? (data[0].sort_order + 1) : 0;
 };
 
 // Update a module in a course
-export const updateCourseModule = (courseId: number, updatedModule: Module): Module => {
-  const courses = getCourses();
-  const courseIndex = courses.findIndex(course => course.id === courseId);
+export const updateCourseModule = async (courseId: number, updatedModule: Module): Promise<Module | null> => {
+  const { error } = await supabase
+    .from('modules')
+    .update({
+      title: updatedModule.title,
+      description: updatedModule.description
+    })
+    .eq('id', updatedModule.id);
   
-  if (courseIndex === -1) {
-    throw new Error(`Course with ID ${courseId} not found`);
+  if (error) {
+    console.error('Error updating module:', error);
+    return null;
   }
-  
-  if (!courses[courseIndex].modules) {
-    throw new Error(`No modules found for course with ID ${courseId}`);
-  }
-  
-  const moduleIndex = courses[courseIndex].modules?.findIndex(module => module.id === updatedModule.id);
-  
-  if (moduleIndex === undefined || moduleIndex === -1) {
-    throw new Error(`Module with ID ${updatedModule.id} not found in course ${courseId}`);
-  }
-  
-  courses[courseIndex].modules![moduleIndex] = updatedModule;
-  courses[courseIndex].updatedAt = new Date().toISOString();
-  localStorage.setItem('courses', JSON.stringify(courses));
   
   return updatedModule;
 };
 
 // Delete a module from a course
-export const deleteCourseModule = (courseId: number, moduleId: string): void => {
-  const courses = getCourses();
-  const courseIndex = courses.findIndex(course => course.id === courseId);
+export const deleteCourseModule = async (courseId: number, moduleId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('modules')
+    .delete()
+    .eq('id', moduleId);
   
-  if (courseIndex === -1) {
-    throw new Error(`Course with ID ${courseId} not found`);
+  if (error) {
+    console.error('Error deleting module:', error);
+    return false;
   }
   
-  if (!courses[courseIndex].modules) {
-    throw new Error(`No modules found for course with ID ${courseId}`);
+  return true;
+};
+
+// Add a lesson to a module
+export const addLessonToModule = async (moduleId: string, lesson: Omit<Lesson, 'id'>): Promise<Lesson | null> => {
+  const { data, error } = await supabase
+    .from('lessons')
+    .insert({
+      module_id: moduleId,
+      title: lesson.title,
+      content: lesson.content,
+      type: lesson.type,
+      duration: lesson.duration,
+      embed_url: lesson.embedData?.url,
+      sort_order: (await getNextLessonSortOrder(moduleId))
+    })
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error adding lesson:', error);
+    return null;
   }
   
-  courses[courseIndex].modules = courses[courseIndex].modules?.filter(module => module.id !== moduleId);
-  courses[courseIndex].updatedAt = new Date().toISOString();
-  localStorage.setItem('courses', JSON.stringify(courses));
+  return {
+    id: data.id,
+    title: data.title,
+    content: data.content,
+    type: data.type,
+    duration: data.duration,
+    embedData: data.embed_url ? {
+      type: 'video',
+      url: data.embed_url,
+      title: data.title
+    } : undefined
+  };
+};
+
+// Helper to get the next sort order for lessons
+const getNextLessonSortOrder = async (moduleId: string): Promise<number> => {
+  const { data } = await supabase
+    .from('lessons')
+    .select('sort_order')
+    .eq('module_id', moduleId)
+    .order('sort_order', { ascending: false })
+    .limit(1);
+  
+  return data && data.length > 0 ? (data[0].sort_order + 1) : 0;
+};
+
+// Update a lesson
+export const updateLesson = async (lessonId: string, updatedLesson: Lesson): Promise<Lesson | null> => {
+  const { error } = await supabase
+    .from('lessons')
+    .update({
+      title: updatedLesson.title,
+      content: updatedLesson.content,
+      type: updatedLesson.type,
+      duration: updatedLesson.duration,
+      embed_url: updatedLesson.embedData?.url
+    })
+    .eq('id', lessonId);
+  
+  if (error) {
+    console.error('Error updating lesson:', error);
+    return null;
+  }
+  
+  return updatedLesson;
+};
+
+// Delete a lesson
+export const deleteLesson = async (lessonId: string): Promise<boolean> => {
+  const { error } = await supabase
+    .from('lessons')
+    .delete()
+    .eq('id', lessonId);
+  
+  if (error) {
+    console.error('Error deleting lesson:', error);
+    return false;
+  }
+  
+  return true;
 };

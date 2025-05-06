@@ -136,6 +136,101 @@ export type Database = {
           },
         ]
       }
+      resources: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          size: number
+          type: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          size: number
+          type: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          size?: number
+          type?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          completed: boolean | null
+          course_id: string
+          created_at: string | null
+          id: string
+          last_accessed: string | null
+          lesson_id: string | null
+          progress_percent: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          course_id: string
+          created_at?: string | null
+          id?: string
+          last_accessed?: string | null
+          lesson_id?: string | null
+          progress_percent?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          last_accessed?: string | null
+          lesson_id?: string | null
+          progress_percent?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string

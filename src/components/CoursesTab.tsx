@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Book, Clock, DollarSign, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 
 // Add isPreview prop to component type definition
 interface CoursesTabProps {
@@ -13,35 +15,47 @@ interface CoursesTabProps {
 
 const CoursesTab = ({ isPreview = false }: CoursesTabProps) => {
   const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   
   useEffect(() => {
-    // In a real app, fetch courses from an API
-    // For now, use mock data stored in localStorage
-    const storedCourses = localStorage.getItem("courses");
-    const parsedCourses = storedCourses ? JSON.parse(storedCourses) : [];
+    fetchCourses();
     
-    // Sort courses by date (newest first)
-    const sortedCourses = [...parsedCourses].sort((a, b) => 
-      new Date(b.createdAt || Date.now()).getTime() - 
-      new Date(a.createdAt || Date.now()).getTime()
-    );
-    
-    setCourses(sortedCourses);
-    
-    // Listen for course added event
-    const handleCourseAdded = () => {
-      const updatedCourses = localStorage.getItem("courses");
-      const parsedUpdatedCourses = updatedCourses ? JSON.parse(updatedCourses) : [];
-      setCourses(parsedUpdatedCourses);
-    };
-    
-    window.addEventListener('courseAdded', handleCourseAdded);
-    
+    // Set up a subscription for real-time updates
+    const channel = supabase
+      .channel('courses-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'courses' },
+        (payload) => {
+          // Reload courses when there's a change
+          fetchCourses();
+        }
+      )
+      .subscribe();
+      
     return () => {
-      window.removeEventListener('courseAdded', handleCourseAdded);
+      supabase.removeChannel(channel);
     };
   }, []);
+  
+  const fetchCourses = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setCourses(data || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const handleViewCourse = (courseId: string) => {
     navigate(`/course/${courseId}`);
@@ -50,11 +64,24 @@ const CoursesTab = ({ isPreview = false }: CoursesTabProps) => {
   // If preview mode, show only 3 courses maximum
   const displayCourses = isPreview ? courses.slice(0, 3) : courses;
   
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-lg"></div>
+        ))}
+      </div>
+    );
+  }
+  
   if (displayCourses.length === 0) {
     return (
       <div className="text-center py-6">
         <h2 className="text-xl font-semibold mb-2 neon-text-primary">Courses</h2>
         <p className="text-muted-foreground mb-4">No courses assigned yet.</p>
+        {isAuthenticated && user?.role === 'instructor' && (
+          <Button onClick={() => navigate('/create-course')}>Create Course</Button>
+        )}
       </div>
     );
   }
@@ -79,9 +106,9 @@ const CoursesTab = ({ isPreview = false }: CoursesTabProps) => {
         {displayCourses.map((course) => (
           <Card key={course.id} className="overflow-hidden card-3d neon-border-hover">
             <div className="relative h-40 bg-muted">
-              {course.thumbnail ? (
+              {course.thumbnail_url ? (
                 <img 
-                  src={course.thumbnail} 
+                  src={course.thumbnail_url} 
                   alt={course.title} 
                   className="w-full h-full object-cover"
                 />
@@ -90,7 +117,7 @@ const CoursesTab = ({ isPreview = false }: CoursesTabProps) => {
                   <Book className="h-12 w-12 text-blue-300 dark:text-blue-500" />
                 </div>
               )}
-              {course.isFeatured && (
+              {course.is_featured && (
                 <Badge className="absolute top-2 right-2 bg-primary/80">Featured</Badge>
               )}
             </div>
