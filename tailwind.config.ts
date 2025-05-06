@@ -65,7 +65,7 @@ export default {
 				},
 				lms: {
 					blue: '#4361EE',
-					purple: '#7209B7',
+					purple: '#9b87f5', // Updated to match the screenshot
 					pink: '#F72585',
 					indigo: '#3A0CA3',
 					teal: '#4CC9F0',
@@ -152,6 +152,14 @@ export default {
 				'progress-fill': {
 					'0%': { width: '0%' },
 					'100%': { width: 'var(--progress-width)' }
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-5px)' }
+				},
+				'pulse-shadow': {
+					'0%, 100%': { boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)' },
+					'50%': { boxShadow: '0 8px 20px rgba(0, 0, 0, 0.15)' }
 				}
 			},
 			animation: {
@@ -161,7 +169,9 @@ export default {
 				'fade-in-fast': 'fade-in 0.2s ease-out',
 				'scale-in': 'scale-in 0.3s ease-out',
 				'slide-in': 'slide-in 0.4s ease-out',
-				'progress-fill': 'progress-fill 1.5s ease-out forwards'
+				'progress-fill': 'progress-fill 1.5s ease-out forwards',
+				'float': 'float 3s ease-in-out infinite',
+				'pulse-shadow': 'pulse-shadow 3s ease-in-out infinite'
 			},
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],

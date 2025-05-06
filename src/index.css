@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 221.2 83.2% 53.9%;
+    --primary: 258 78% 74%; /* Purple color #9b87f5 */
     --primary-foreground: 0 0% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,7 +33,7 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.9%;
+    --ring: 258 78% 74%; /* Matching primary */
 
     --radius: 0.5rem;
 
@@ -44,7 +44,7 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 258 78% 74%; /* Matching primary */
   }
 
   .dark {
@@ -57,7 +57,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 258 78% 74%; /* Purple color #9b87f5 */
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -74,7 +74,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 258 78% 74%; /* Matching primary */
 
     --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
@@ -83,7 +83,7 @@
     --sidebar-accent: 217.2 32.6% 17.5%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 215.3 25.2% 26.4%;
-    --sidebar-ring: 224.3 76.3% 48%;
+    --sidebar-ring: 258 78% 74%; /* Matching primary */
   }
 }
 
@@ -128,40 +128,38 @@
     @apply h-full rounded-full animate-progress-fill;
   }
   
-  /* Card components */
+  /* Card components with 3D effects */
   .course-card {
     @apply bg-white border border-gray-200 rounded-xl p-6 shadow-lg 
-           transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px];
+           transition-all duration-300 hover:shadow-xl hover:translate-y-[-4px]
+           hover:shadow-primary/10;
   }
   
   .stat-card {
     @apply flex flex-col gap-1 p-4 rounded-xl border border-gray-200 bg-white
-           transition-all duration-300 hover:shadow-md;
+           transition-all duration-300 hover:shadow-md hover:shadow-primary/10
+           hover:border-primary/20;
   }
   
   /* 3D card effects */
   .card-3d {
-    @apply transition-all duration-300 transform;
+    @apply transition-all duration-300 transform hover:shadow-lg hover:shadow-primary/10;
   }
   
   .card-3d:hover {
-    @apply transform-gpu -translate-y-1 shadow-lg;
+    @apply transform-gpu -translate-y-1;
   }
 
-  /* Fullscreen toggle */
-  .fullscreen-toggle {
-    @apply absolute top-2 right-2 p-1.5 rounded-full bg-black/30 text-white z-10 
-           hover:bg-black/50 transition-colors;
+  /* Button hover effects */
+  .button-3d {
+    @apply relative transition-all duration-200 transform active:scale-95 active:translate-y-1;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
   }
   
-  .fullscreen-container {
-    @apply relative;
+  .button-3d:hover {
+    box-shadow: 0 8px 25px rgba(155, 135, 245, 0.25);
   }
   
-  .fullscreen-active {
-    @apply fixed inset-0 w-full h-full z-50 bg-black flex items-center justify-center p-4;
-  }
-
   /* Sidebar menu animations */
   .sidebar-menu-item {
     @apply relative overflow-hidden;
@@ -177,5 +175,37 @@
   
   .sidebar-menu-item.active::after {
     @apply scale-x-100;
+  }
+  
+  /* Interactive 3D elements */
+  .hover-float {
+    @apply transition-transform duration-300 ease-in-out hover:-translate-y-1;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300 ease-in-out hover:scale-105;
+  }
+  
+  .hover-rotate {
+    @apply transition-transform duration-300 ease-in-out hover:rotate-1;
+  }
+  
+  .active-state {
+    @apply relative after:content-[''] after:absolute after:bottom-0 after:left-0 
+           after:w-full after:h-0.5 after:bg-primary;
+  }
+  
+  /* Fullscreen toggle */
+  .fullscreen-toggle {
+    @apply absolute top-2 right-2 p-1.5 rounded-full bg-black/30 text-white z-10 
+           hover:bg-black/50 transition-colors;
+  }
+  
+  .fullscreen-container {
+    @apply relative;
+  }
+  
+  .fullscreen-active {
+    @apply fixed inset-0 w-full h-full z-50 bg-black flex items-center justify-center p-4;
   }
 }

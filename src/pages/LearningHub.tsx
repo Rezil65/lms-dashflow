@@ -1,10 +1,15 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, FileText, Play, Clock, CheckCircle, ChevronRight, ChevronLeft, Download, Maximize, Volume2, Brain } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import LearningHubHeader from "@/components/LearningHubHeader";
+import VideoPlayer from "@/components/VideoPlayer";
+import ResourceItem from "@/components/ResourceItem";
 
 // Define types for our chapter items
 type VideoChapter = {
@@ -49,6 +54,7 @@ interface Course {
 
 const LearningHub = () => {
   const { courseId, contentId } = useParams();
+  const { toast } = useToast();
   
   // Mock course data
   const course: Course = {
@@ -140,79 +146,63 @@ const LearningHub = () => {
     chapter.current
   );
 
+  // Handle navigation between chapters
+  const handlePrevious = () => {
+    toast({
+      title: "Navigation",
+      description: "Moving to previous chapter",
+    });
+  };
+
+  const handleNext = () => {
+    toast({
+      title: "Navigation",
+      description: "Moving to next chapter",
+    });
+  };
+
+  const handleMarkComplete = () => {
+    toast({
+      title: "Progress updated",
+      description: "Chapter marked as complete",
+    });
+  };
+
+  const handleDownloadResource = (resourceName: string) => {
+    toast({
+      title: "Download started",
+      description: `Downloading ${resourceName}...`,
+    });
+  };
+
+  const handleChapterClick = (chapterId: string) => {
+    toast({
+      title: "Changing chapter",
+      description: `Navigating to ${chapterId}`,
+    });
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)]">
         {/* Main Content Area */}
         <div className="flex-1 overflow-auto">
-          <div className="p-4 bg-background border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm">
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                </Button>
-                <div className="hidden md:block">|</div>
-                <Button variant="ghost" size="sm">
-                  Next <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-              <h1 className="text-lg font-medium hidden md:block">{course.title}</h1>
-              <Button variant="outline" size="sm" className="ml-auto md:ml-0">
-                Mark Complete
-              </Button>
-            </div>
-          </div>
+          <LearningHubHeader 
+            title={course.title}
+            onPrevious={handlePrevious}
+            onNext={handleNext}
+            onMarkComplete={handleMarkComplete}
+          />
           
           <div className="relative h-full">
             {/* Video Player */}
-            <div className="relative aspect-video bg-black max-h-[70vh]">
-              <img 
-                src="/public/lovable-uploads/fafbd30f-cf32-4df0-b591-c13cfc422278.png" 
-                alt="Course content" 
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Video Controls Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Button size="icon" className="h-16 w-16 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm">
-                  <Play className="h-8 w-8 text-white" fill="white" />
-                </Button>
-              </div>
-              
-              {/* Bottom Controls */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                <div className="flex flex-col space-y-2">
-                  <Progress value={45} className="h-1" />
-                  
-                  <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center space-x-3">
-                      <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-white/10">
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      
-                      <span className="text-xs">03:01 / 07:12</span>
-                      
-                      <div className="flex items-center space-x-1">
-                        <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-white/10">
-                          <Volume2 className="h-4 w-4" />
-                        </Button>
-                        <Progress value={75} className="h-1 w-16" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-white/10">
-                        <Maximize className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <VideoPlayer 
+              thumbnailUrl="/public/lovable-uploads/fafbd30f-cf32-4df0-b591-c13cfc422278.png"
+            />
             
             {/* Content Details */}
             <div className="p-6">
-              <h2 className="text-2xl font-semibold mb-2">Carrot Cake Gingerbread</h2>
+              <h2 className="text-2xl font-semibold mb-2 hover:text-primary transition-colors">Carrot Cake Gingerbread</h2>
               
               <p className="text-muted-foreground mb-6">
                 Toffee croissant icing toffee. Sweet roll chupa chups marshmallow muffin liquorice chupa chups soufflé bonbon. Liquorice gummi bears cake donut chocolate lollipop gummi bears. Cake jujubes soufflé.
@@ -222,39 +212,17 @@ const LearningHub = () => {
               <div className="mb-6">
                 <h3 className="font-semibold mb-3">Resources</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <Card>
-                    <CardContent className="p-4 flex items-center">
-                      <div className="p-2 rounded-md bg-pink-100">
-                        <FileText className="h-5 w-5 text-pink-600" />
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">nice_recipe.doc</span>
-                          <span className="text-xs text-muted-foreground">521 KB</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <ResourceItem 
+                    title="nice_recipe.doc"
+                    size="521 KB"
+                    onDownload={() => handleDownloadResource("nice_recipe.doc")}
+                  />
                   
-                  <Card>
-                    <CardContent className="p-4 flex items-center">
-                      <div className="p-2 rounded-md bg-pink-100">
-                        <FileText className="h-5 w-5 text-pink-600" />
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm">bread_making.doc</span>
-                          <span className="text-xs text-muted-foreground">521 KB</span>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <ResourceItem 
+                    title="bread_making.doc"
+                    size="521 KB"
+                    onDownload={() => handleDownloadResource("bread_making.doc")}
+                  />
                 </div>
               </div>
             </div>
@@ -282,7 +250,13 @@ const LearningHub = () => {
                     <Button 
                       key={chapter.id}
                       variant={chapter.current ? "secondary" : "ghost"} 
-                      className={`w-full justify-start py-2 pl-8 pr-2 h-auto text-left ${chapter.isCompleted ? 'text-muted-foreground' : ''}`}
+                      className={`
+                        w-full justify-start py-2 pl-8 pr-2 h-auto text-left 
+                        ${chapter.isCompleted ? 'text-muted-foreground' : ''}
+                        transition-all duration-200 hover:bg-primary/10
+                        ${chapter.current ? 'shadow-inner shadow-primary/20' : ''}
+                      `}
+                      onClick={() => handleChapterClick(chapter.id)}
                     >
                       <div className="flex items-start gap-2 w-full">
                         <div className={`mt-1 ${chapter.current ? 'text-primary' : (chapter.isCompleted ? 'text-green-500' : 'text-muted-foreground')}`}>
