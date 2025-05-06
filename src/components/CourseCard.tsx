@@ -17,9 +17,9 @@ const CourseCard = ({ course }: CourseCardProps) => {
   return (
     <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
       <div className="relative aspect-video bg-muted">
-        {course.thumbnail_url ? (
+        {course.thumbnail ? (
           <img 
-            src={course.thumbnail_url} 
+            src={course.thumbnail} 
             alt={course.title} 
             className="w-full h-full object-cover"
           />
@@ -28,7 +28,7 @@ const CourseCard = ({ course }: CourseCardProps) => {
             <BookOpen className="h-10 w-10 text-muted-foreground/40" />
           </div>
         )}
-        {course.is_featured && (
+        {course.isFeatured && (
           <Badge className="absolute top-2 right-2 bg-primary">Featured</Badge>
         )}
       </div>

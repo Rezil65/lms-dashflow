@@ -64,7 +64,7 @@ const CourseInfoCard = ({ course, showEnroll = false, showPrice = false }: Cours
               <span>Last Updated</span>
             </div>
             <span className="font-medium">
-              {course.updated_at ? new Date(course.updated_at).toLocaleDateString() : "N/A"}
+              {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : "N/A"}
             </span>
           </div>
 

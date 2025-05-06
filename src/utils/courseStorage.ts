@@ -19,20 +19,20 @@ export interface Lesson {
 }
 
 export interface Course {
-  id: string; // Changed from number to string to match database schema
+  id: string;
   title: string;
   description: string;
-  thumbnail?: string;
+  thumbnail: string; // Changed from thumbnail_url for consistent naming
   category?: string;
   duration?: string;
   lessonCount?: number;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: string;  // Changed from created_at for consistent naming
+  updatedAt?: string; // Changed from updated_at for consistent naming
   modules?: Module[];
   embedContent?: EmbedData[];
-  level?: 'beginner' | 'intermediate' | 'advanced' | string; // Added string to match database values
+  level?: 'beginner' | 'intermediate' | 'advanced' | string;
   price?: number;
-  isFeatured?: boolean;
+  isFeatured?: boolean; // Changed from is_featured for consistent naming
   tags?: string[];
 }
 
@@ -50,14 +50,14 @@ export const getCourses = async (): Promise<Course[]> => {
     id: course.id,
     title: course.title,
     description: course.description,
-    thumbnail: course.thumbnail_url,
+    thumbnail: course.thumbnail_url, // Map from DB column to interface property
     category: course.category,
     duration: course.duration,
-    createdAt: course.created_at,
-    updatedAt: course.updated_at,
+    createdAt: course.created_at, // Map from DB column to interface property
+    updatedAt: course.updated_at, // Map from DB column to interface property
     level: course.level,
     price: course.price,
-    isFeatured: course.is_featured,
+    isFeatured: course.is_featured, // Map from DB column to interface property
     tags: course.tags
   }));
 };
@@ -181,12 +181,12 @@ export const addCourse = async (course: Omit<Course, 'id' | 'createdAt'>): Promi
     .insert({
       title: course.title,
       description: course.description,
-      thumbnail_url: course.thumbnail,
+      thumbnail_url: course.thumbnail, // Map from interface property to DB column
       category: course.category,
       duration: course.duration,
       level: course.level,
       price: course.price,
-      is_featured: course.isFeatured || false,
+      is_featured: course.isFeatured, // Map from interface property to DB column
       tags: course.tags,
       created_by: userData.user.id
     })
@@ -219,29 +219,30 @@ export const addCourse = async (course: Omit<Course, 'id' | 'createdAt'>): Promi
 export const saveCourse = addCourse;
 
 // Update an existing course
-export const updateCourse = async (updatedCourse: Course): Promise<Course | null> => {
+export const updateCourse = async (id: string, updatedCourse: Partial<Course>): Promise<Course | null> => {
   const { error } = await supabase
     .from('courses')
     .update({
       title: updatedCourse.title,
       description: updatedCourse.description,
-      thumbnail_url: updatedCourse.thumbnail,
+      thumbnail_url: updatedCourse.thumbnail, // Map from interface property to DB column
       category: updatedCourse.category,
       duration: updatedCourse.duration,
       level: updatedCourse.level,
       price: updatedCourse.price,
-      is_featured: updatedCourse.isFeatured,
+      is_featured: updatedCourse.isFeatured, // Map from interface property to DB column
       tags: updatedCourse.tags,
       updated_at: new Date().toISOString()
     })
-    .eq('id', updatedCourse.id);
+    .eq('id', id);
   
   if (error) {
     console.error('Error updating course:', error);
     return null;
   }
   
-  return updatedCourse;
+  // Fetch the updated course
+  return getCourseById(id);
 };
 
 // Delete a course
@@ -260,7 +261,7 @@ export const deleteCourse = async (id: string): Promise<boolean> => {
 };
 
 // Add a module to a course
-export const addModuleToCourse = async (courseId: string, module: Omit<Module, 'id'>): Promise<Module | null> => {
+export const addModuleToCourse = async (courseId: string, module: { title: string; description: string }): Promise<Module | null> => {
   const { data, error } = await supabase
     .from('modules')
     .insert({

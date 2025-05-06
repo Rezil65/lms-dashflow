@@ -25,9 +25,11 @@ const CourseCreation = () => {
     level: "",
     price: 0,
     duration: "",
-    thumbnail_url: "",
-    modules: []
+    thumbnail: "", // Changed from thumbnail_url to thumbnail
+    modules: [],
+    createdAt: new Date().toISOString() // Added required field
   });
+  
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState("details");
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,9 +70,9 @@ const MyLearningsTab = () => {
                     <CardContent className="p-0">
                       <div className="flex flex-col md:flex-row">
                         <div className="md:w-64 h-40 md:h-auto bg-muted flex-shrink-0">
-                          {course.thumbnail_url ? (
+                          {course.thumbnail ? (
                             <img 
-                              src={course.thumbnail_url} 
+                              src={course.thumbnail} 
                               alt={course.title} 
                               className="w-full h-full object-cover"
                             />
@@ -141,9 +140,9 @@ const MyLearningsTab = () => {
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row">
                       <div className="md:w-64 h-40 md:h-auto bg-muted flex-shrink-0 relative">
-                        {course.thumbnail_url ? (
+                        {course.thumbnail ? (
                           <img 
-                            src={course.thumbnail_url} 
+                            src={course.thumbnail} 
                             alt={course.title} 
                             className="w-full h-full object-cover"
                           />

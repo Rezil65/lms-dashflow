@@ -1,9 +1,6 @@
-
 import { toast } from "@/hooks/use-toast";
+import type { Course, Module, Lesson } from "@/utils/courseStorage";
 import { 
-  Course, 
-  Module, 
-  Lesson, 
   getCourses, 
   getCourseById, 
   getTotalCourseCount as getStorageCourseCount,
@@ -19,10 +16,8 @@ import {
 } from "@/utils/courseStorage";
 
 // Re-export the types and functions
+export type { Course, Module, Lesson };
 export { 
-  Course, 
-  Module, 
-  Lesson, 
   getCourses, 
   getCourseById, 
   createCourse,
