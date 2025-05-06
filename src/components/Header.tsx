@@ -35,7 +35,23 @@ const Header = () => {
   };
 
   const handleDashboardClick = () => {
-    navigate('/dashboard');
+    if (user) {
+      switch (user.role) {
+        case "admin":
+          navigate('/admin');
+          break;
+        case "instructor":
+          navigate('/instructor');
+          break;
+        case "learner":
+          navigate('/dashboard');
+          break;
+        default:
+          navigate('/dashboard');
+      }
+    } else {
+      navigate('/dashboard');
+    }
   };
   
   return (
@@ -47,7 +63,7 @@ const Header = () => {
               src="/lovable-uploads/b4b49a49-4415-4608-919d-8c583dd41903.png" 
               alt="Kyureeus Logo" 
               className="h-8 hover:opacity-80 transition-opacity cursor-pointer"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => handleDashboardClick()}
             />
           </div>
           <div>

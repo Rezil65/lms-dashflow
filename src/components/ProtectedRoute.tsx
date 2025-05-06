@@ -1,4 +1,3 @@
-
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { UserRole } from "@/context/AuthContext";
@@ -27,10 +26,9 @@ const ProtectedRoute = ({
   // If permission is required and user doesn't have it, redirect
   if (requiredPermission && !hasPermission(requiredPermission)) {
     // Redirect based on role
-    let redirectTo = "/";
+    let redirectTo = "/dashboard";
     if (user && user.role === "admin") redirectTo = "/admin";
     if (user && user.role === "instructor") redirectTo = "/instructor";
-    if (user && user.role === "learner") redirectTo = "/learner";
     
     return <Navigate to={redirectTo} replace />;
   }
@@ -38,10 +36,9 @@ const ProtectedRoute = ({
   // If allowedRoles is provided and user role is not in allowedRoles, redirect to appropriate dashboard
   if (allowedRoles.length > 0 && user && !hasRole(allowedRoles)) {
     // Redirect based on role
-    let redirectTo = "/";
+    let redirectTo = "/dashboard";
     if (user.role === "admin") redirectTo = "/admin";
     if (user.role === "instructor") redirectTo = "/instructor";
-    if (user.role === "learner") redirectTo = "/learner";
     
     return <Navigate to={redirectTo} replace />;
   }
