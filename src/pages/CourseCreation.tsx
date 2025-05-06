@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { saveCourse, getCourseById, addModuleToCourse, Course } from "@/utils/courseUtils";
+import { getCourseById, createCourse, updateCourse, addModuleToCourse, Course } from "@/utils/courseUtils";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Plus, Save } from "lucide-react";
@@ -70,10 +70,10 @@ const CourseCreation = () => {
       
       if (isEditing && course.id) {
         // Update existing course
-        savedCourse = await saveCourse({ ...courseData, id: course.id });
+        savedCourse = await updateCourse(course.id, courseData);
       } else {
         // Create new course
-        savedCourse = await saveCourse(courseData);
+        savedCourse = await createCourse(courseData);
       }
       
       if (savedCourse) {

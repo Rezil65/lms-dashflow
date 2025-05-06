@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getCourseById, Course } from "@/utils/courseUtils";
@@ -22,7 +23,9 @@ const CourseDetail = () => {
       
       try {
         const courseData = await getCourseById(id);
-        setCourse(courseData);
+        if (courseData) {
+          setCourse(courseData);
+        }
       } catch (error) {
         console.error("Error fetching course:", error);
       } finally {

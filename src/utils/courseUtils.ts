@@ -35,7 +35,7 @@ export interface Lesson {
   duration?: string;
   embed_url?: string;
   sort_order?: number;
-  // Add missing properties
+  // Added missing properties
   embedData?: {
     url?: string;
     type?: string;
@@ -195,8 +195,10 @@ export const addModuleToCourse = async (courseId: string, module: Partial<Module
   const { data, error } = await supabase
     .from('modules')
     .insert({
-      ...module,
-      course_id: courseId
+      course_id: courseId,
+      title: module.title || "New Module",
+      description: module.description || "",
+      sort_order: module.sort_order || 0
     })
     .select()
     .single();
@@ -214,8 +216,13 @@ export const addLessonToModule = async (moduleId: string, lesson: Partial<Lesson
   const { data, error } = await supabase
     .from('lessons')
     .insert({
-      ...lesson,
-      module_id: moduleId
+      module_id: moduleId,
+      title: lesson.title || "New Lesson",
+      content: lesson.content || "",
+      type: lesson.type || "text",
+      duration: lesson.duration || "",
+      embed_url: lesson.embedData?.url || null,
+      sort_order: lesson.sort_order || 0
     })
     .select()
     .single();
@@ -226,4 +233,18 @@ export const addLessonToModule = async (moduleId: string, lesson: Partial<Lesson
   }
   
   return data;
+};
+
+// Get total course count
+export const getTotalCourseCount = async (): Promise<number> => {
+  const { count, error } = await supabase
+    .from('courses')
+    .select('*', { count: 'exact', head: true });
+    
+  if (error) {
+    console.error('Error counting courses:', error);
+    return 0;
+  }
+  
+  return count || 0;
 };

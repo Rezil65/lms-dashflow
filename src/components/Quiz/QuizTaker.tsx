@@ -1,300 +1,233 @@
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Quiz } from "@/hooks/use-quiz";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CheckCircle, XCircle, Clock, ArrowRight, RotateCcw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { ArrowRight, Check } from "lucide-react";
+import { useQuiz } from '@/hooks/use-quiz';
+import { useAuth } from '@/context/AuthContext';
 
-interface QuizTakerProps {
-  quiz: Quiz;
-  onComplete: (score: number, total: number) => void;
-  darkMode?: boolean;
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  type?: 'single-choice' | 'multiple-choice';
+  options: {
+    id?: string;
+    text: string;
+    isCorrect: boolean;
+  }[];
 }
 
-const QuizTaker = ({ quiz, onComplete, darkMode = false }: QuizTakerProps) => {
-  const { toast } = useToast();
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({});
-  const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [score, setScore] = useState(0);
-  const [remainingTime, setRemainingTime] = useState(quiz.questions.length * 30);
-  const [timerActive, setTimerActive] = useState(false);
+interface QuizTakerProps {
+  quiz: {
+    id?: string;
+    title?: string;
+    questions: QuizQuestion[];
+  };
+  onComplete?: (score: number, total: number) => void;
+}
 
-  // Initialize selectedAnswers with empty arrays for each question
-  useEffect(() => {
-    const initialAnswers: Record<string, string[]> = {};
-    quiz.questions.forEach(question => {
-      initialAnswers[question.id] = [];
+const QuizTaker = ({ quiz, onComplete }: QuizTakerProps) => {
+  const { user } = useAuth();
+  const { submitQuizResult } = useQuiz();
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
+  const [score, setScore] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const currentQuestion = quiz.questions[currentStep];
+  const isLastQuestion = currentStep === quiz.questions.length - 1;
+  const progress = ((currentStep + 1) / quiz.questions.length) * 100;
+
+  const handleSingleAnswer = (value: string) => {
+    setAnswers({
+      ...answers,
+      [currentQuestion.id]: [value]
     });
-    setSelectedAnswers(initialAnswers);
-    setQuizSubmitted(false);
-    setCurrentQuestionIndex(0);
-    setRemainingTime(quiz.questions.length * 30);
-    setTimerActive(false);
-  }, [quiz]);
+  };
 
-  // Timer effect
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
+  const handleMultipleAnswer = (value: string) => {
+    const currentAnswers = answers[currentQuestion.id] || [];
+    const updated = currentAnswers.includes(value)
+      ? currentAnswers.filter(v => v !== value)
+      : [...currentAnswers, value];
     
-    if (timerActive && remainingTime > 0) {
-      timer = setInterval(() => {
-        setRemainingTime(prev => prev - 1);
-      }, 1000);
-    } else if (remainingTime === 0 && timerActive) {
-      handleSubmitQuiz();
+    setAnswers({
+      ...answers,
+      [currentQuestion.id]: updated
+    });
+  };
+
+  const handleNext = () => {
+    if (isLastQuestion) {
+      handleSubmit();
+    } else {
+      setCurrentStep(currentStep + 1);
     }
-    
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [remainingTime, timerActive]);
+  };
 
-  const handleAnswerChange = (questionId: string, optionId: string, isSingleChoice: boolean) => {
-    if (!timerActive) setTimerActive(true);
-    
-    setSelectedAnswers(prev => {
-      const updated = { ...prev };
+  const handlePrevious = () => {
+    setCurrentStep(Math.max(0, currentStep - 1));
+  };
 
-      if (isSingleChoice) {
-        // For single choice questions, replace the selected answer
-        updated[questionId] = [optionId];
+  const isAnswered = () => {
+    return !!(answers[currentQuestion?.id]?.length > 0);
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    // Calculate score
+    let correctAnswers = 0;
+    quiz.questions.forEach(question => {
+      const userAnswers = answers[question.id] || [];
+      const correctOptions = question.options
+        .filter(o => o.isCorrect)
+        .map(o => o.id || o.text);
+
+      if (question.type === 'multiple-choice') {
+        // For multiple choice, check that user selected all correct options and no incorrect ones
+        const correct = correctOptions.every(opt => userAnswers.includes(opt)) &&
+                        userAnswers.every(ans => correctOptions.includes(ans));
+        if (correct) correctAnswers++;
       } else {
-        // For multiple choice, toggle the selection
-        if (updated[questionId].includes(optionId)) {
-          updated[questionId] = updated[questionId].filter(id => id !== optionId);
-        } else {
-          updated[questionId] = [...updated[questionId], optionId];
+        // For single choice, check if the selected option is correct
+        if (userAnswers.length === 1 && correctOptions.includes(userAnswers[0])) {
+          correctAnswers++;
         }
       }
-
-      return updated;
     });
-  };
 
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
+    setScore(correctAnswers);
+    setSubmitted(true);
 
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-  
-  const handleSubmitQuiz = () => {
-    setTimerActive(false);
-    
-    let correctCount = 0;
-    let totalPossiblePoints = 0;
-    
-    quiz.questions.forEach(question => {
-      const correctOptionIds = question.options
-        .filter(option => option.isCorrect)
-        .map(option => option.id);
-      
-      const userSelectedIds = selectedAnswers[question.id] || [];
-      
-      // Count as correct only if user selected all correct options and no incorrect ones
-      const allCorrectSelected = correctOptionIds.every(id => userSelectedIds.includes(id));
-      const noIncorrectSelected = userSelectedIds.every(id => correctOptionIds.includes(id));
-      
-      if (allCorrectSelected && noIncorrectSelected) {
-        correctCount++;
+    // If quiz has an ID and user is logged in, submit results
+    if (quiz.id && user) {
+      try {
+        await submitQuizResult({
+          quizId: quiz.id,
+          score: correctAnswers,
+          totalQuestions: quiz.questions.length,
+          selectedOptions: answers,
+        });
+      } catch (error) {
+        console.error("Error submitting quiz result:", error);
       }
-      
-      totalPossiblePoints++;
-    });
-    
-    const calculatedScore = Math.round((correctCount / totalPossiblePoints) * 100);
-    setScore(calculatedScore);
-    setQuizSubmitted(true);
-    
-    onComplete(calculatedScore, totalPossiblePoints);
+    }
+
+    // Call onComplete callback if provided
+    if (onComplete) {
+      onComplete(correctAnswers, quiz.questions.length);
+    }
+
+    setIsSubmitting(false);
   };
 
-  const handleTryAgain = () => {
-    setQuizSubmitted(false);
-    // Reset selected answers
-    const resetAnswers: Record<string, string[]> = {};
-    quiz.questions.forEach(question => {
-      resetAnswers[question.id] = [];
-    });
-    setSelectedAnswers(resetAnswers);
-    setCurrentQuestionIndex(0);
-    setRemainingTime(quiz.questions.length * 30);
-    setTimerActive(false);
-  };
-
-  // Format remaining time as minutes:seconds
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
-
-  // Current question
-  const currentQuestion = quiz.questions[currentQuestionIndex];
-  const isSingleChoice = quiz.type === 'single-choice' || 
-    (currentQuestion.options.filter(o => o.isCorrect).length === 1);
-
-  // Results view
-  if (quizSubmitted) {
+  if (submitted) {
     return (
-      <div className={`space-y-6 ${darkMode ? 'text-white' : ''}`}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Quiz Results</CardTitle>
-            <CardDescription>
-              You scored {score}% ({Math.round(score * quiz.questions.length / 100)} out of {quiz.questions.length} correct)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Progress value={score} className="h-2" />
-            
-            <div className="space-y-4 mt-4">
-              {quiz.questions.map((question, index) => {
-                const userSelectedIds = selectedAnswers[question.id] || [];
-                const correctOptionIds = question.options
-                  .filter(option => option.isCorrect)
-                  .map(option => option.id);
-                
-                const allCorrectSelected = correctOptionIds.every(id => userSelectedIds.includes(id));
-                const noIncorrectSelected = userSelectedIds.every(id => correctOptionIds.includes(id));
-                const isCorrect = allCorrectSelected && noIncorrectSelected;
-                
-                return (
-                  <div key={question.id} className={`p-4 border rounded-md ${isCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <div className="flex items-start gap-2">
-                      {isCorrect ? (
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                      )}
-                      <div>
-                        <p className="font-medium mb-2">{index + 1}. {question.question}</p>
-                        <div className="space-y-2">
-                          {question.options.map(option => {
-                            const isSelected = userSelectedIds.includes(option.id);
-                            const isCorrectOption = option.isCorrect;
-                            
-                            return (
-                              <div 
-                                key={option.id}
-                                className={`flex items-center p-2 rounded ${
-                                  isSelected && isCorrectOption ? 'bg-green-100' :
-                                  isSelected && !isCorrectOption ? 'bg-red-100' :
-                                  !isSelected && isCorrectOption ? 'bg-green-50' : ''
-                                }`}
-                              >
-                                <div className="mr-2">
-                                  {isSelected && isCorrectOption && <CheckCircle className="h-4 w-4 text-green-600" />}
-                                  {isSelected && !isCorrectOption && <XCircle className="h-4 w-4 text-red-600" />}
-                                  {!isSelected && isCorrectOption && <CheckCircle className="h-4 w-4 text-green-600 opacity-50" />}
-                                </div>
-                                <span>{option.text}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <Button onClick={handleTryAgain} className="w-full mt-4">
-              <RotateCcw className="h-4 w-4 mr-2" /> Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Check className="h-6 w-6 text-green-500" /> Quiz Completed
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center py-6 space-y-4">
+          <div className="text-4xl font-bold">
+            {score} / {quiz.questions.length}
+          </div>
+          <Progress value={(score! / quiz.questions.length) * 100} className="h-2 w-48 mx-auto" />
+          <p className="text-muted-foreground">
+            You answered {score} out of {quiz.questions.length} questions correctly.
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button onClick={() => {
+            setSubmitted(false);
+            setCurrentStep(0);
+            setAnswers({});
+            setScore(null);
+          }}>
+            Try Again
+          </Button>
+        </CardFooter>
+      </Card>
     );
   }
 
-  // Quiz taking view
   return (
-    <div className={`space-y-6 ${darkMode ? 'text-white' : ''}`}>
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div className="text-sm">
-          Question {currentQuestionIndex + 1} of {quiz.questions.length}
-        </div>
-        <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
-          <span>{formatTime(remainingTime)}</span>
+        <h3 className="text-lg font-medium">
+          {quiz.title || "Quiz"}
+        </h3>
+        <div className="text-sm text-muted-foreground">
+          Question {currentStep + 1} of {quiz.questions.length}
         </div>
       </div>
       
-      <Progress value={(currentQuestionIndex / quiz.questions.length) * 100} className="h-1.5" />
+      <Progress value={progress} className="h-2" />
       
-      <div className="py-4">
-        <h3 className="text-xl font-medium mb-4">{currentQuestion.question}</h3>
-        
-        <div className="space-y-3 mt-6">
-          {isSingleChoice ? (
-            <RadioGroup 
-              value={selectedAnswers[currentQuestion.id]?.[0] || ""}
-              onValueChange={(value) => handleAnswerChange(currentQuestion.id, value, true)}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{currentQuestion.question}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {(currentQuestion.type === 'multiple-choice' || 
+            currentQuestion.options.filter(o => o.isCorrect).length > 1) ? (
+            <div className="space-y-3">
+              {currentQuestion.options.map((option, i) => (
+                <div key={option.id || i} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`option-${i}`}
+                    checked={(answers[currentQuestion.id] || []).includes(option.id || option.text)}
+                    onCheckedChange={() => handleMultipleAnswer(option.id || option.text)}
+                  />
+                  <Label htmlFor={`option-${i}`} className="cursor-pointer flex-1">
+                    {option.text}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <RadioGroup
+              value={(answers[currentQuestion.id] || [])[0]}
+              onValueChange={handleSingleAnswer}
               className="space-y-3"
             >
-              {currentQuestion.options.map(option => (
-                <div key={option.id} className="flex items-center space-x-2 border p-3 rounded-md hover:bg-muted/50">
-                  <RadioGroupItem value={option.id} id={option.id} />
-                  <Label htmlFor={option.id} className="flex-1 cursor-pointer">{option.text}</Label>
+              {currentQuestion.options.map((option, i) => (
+                <div key={option.id || i} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.id || option.text} id={`option-${i}`} />
+                  <Label htmlFor={`option-${i}`} className="cursor-pointer flex-1">
+                    {option.text}
+                  </Label>
                 </div>
               ))}
             </RadioGroup>
-          ) : (
-            <div className="space-y-3">
-              {currentQuestion.options.map(option => {
-                const isSelected = selectedAnswers[currentQuestion.id]?.includes(option.id) || false;
-                return (
-                  <div 
-                    key={option.id} 
-                    className="flex items-center space-x-2 border p-3 rounded-md hover:bg-muted/50"
-                    onClick={() => handleAnswerChange(currentQuestion.id, option.id, false)}
-                  >
-                    <Checkbox 
-                      id={option.id}
-                      checked={isSelected}
-                      onCheckedChange={() => handleAnswerChange(currentQuestion.id, option.id, false)}
-                    />
-                    <Label htmlFor={option.id} className="flex-1 cursor-pointer">{option.text}</Label>
-                  </div>
-                );
-              })}
-            </div>
           )}
-        </div>
-      </div>
-      
-      <div className="flex justify-between pt-4">
-        <Button
-          variant="outline"
-          onClick={handlePreviousQuestion}
-          disabled={currentQuestionIndex === 0}
-        >
-          Previous
-        </Button>
-        
-        {currentQuestionIndex < quiz.questions.length - 1 ? (
-          <Button onClick={handleNextQuestion}>
-            Next <ArrowRight className="ml-1 h-4 w-4" />
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevious}
+            disabled={currentStep === 0}
+          >
+            Previous
           </Button>
-        ) : (
-          <Button onClick={handleSubmitQuiz}>
-            Submit Quiz
+          <Button 
+            onClick={handleNext}
+            disabled={!isAnswered() || isSubmitting}
+          >
+            {isLastQuestion ? 'Submit' : 'Next'} 
+            {!isLastQuestion && <ArrowRight className="ml-1 h-4 w-4" />}
           </Button>
-        )}
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

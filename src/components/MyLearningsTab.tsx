@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -44,8 +45,8 @@ const MyLearningsTab = () => {
   const inProgressCourses = courses.slice(0, 2); // Simulating in-progress courses
   const completedCourses = courses.slice(2, 3); // Simulating completed courses
 
-  const handleContinueLearning = (courseId: number) => {
-    navigate(`/course/${courseId.toString()}/content`);
+  const handleContinueLearning = (courseId: string) => {
+    navigate(`/course/${courseId}/content`);
   };
 
   return (
@@ -70,9 +71,9 @@ const MyLearningsTab = () => {
                     <CardContent className="p-0">
                       <div className="flex flex-col md:flex-row">
                         <div className="md:w-64 h-40 md:h-auto bg-muted flex-shrink-0">
-                          {course.thumbnail ? (
+                          {course.thumbnail_url ? (
                             <img 
-                              src={course.thumbnail} 
+                              src={course.thumbnail_url} 
                               alt={course.title} 
                               className="w-full h-full object-cover"
                             />
@@ -140,9 +141,9 @@ const MyLearningsTab = () => {
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row">
                       <div className="md:w-64 h-40 md:h-auto bg-muted flex-shrink-0 relative">
-                        {course.thumbnail ? (
+                        {course.thumbnail_url ? (
                           <img 
-                            src={course.thumbnail} 
+                            src={course.thumbnail_url} 
                             alt={course.title} 
                             className="w-full h-full object-cover"
                           />
@@ -170,7 +171,7 @@ const MyLearningsTab = () => {
                             <span className="text-sm font-medium">Completed on May 15, 2023</span>
                           </div>
                           
-                          <Button variant="outline" onClick={() => navigate(`/course/${course.id.toString()}/content`)}>
+                          <Button variant="outline" onClick={() => navigate(`/course/${course.id}/content`)}>
                             <Play className="w-4 h-4 mr-1" />
                             Review Content
                           </Button>
