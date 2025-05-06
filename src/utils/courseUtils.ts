@@ -1,252 +1,57 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-export interface Course {
-  id: string; // Changed from string to match the database schema
-  title: string;
-  description: string;
-  thumbnail_url?: string;
-  duration?: string;
-  price?: number;
-  is_featured?: boolean;
-  level?: string;
-  category?: string;
-  created_by?: string;
-  created_at?: string;
-  updated_at?: string;
-  modules?: Module[];
-}
-
-export interface Module {
-  id: string;
-  title: string;
-  description?: string;
-  course_id?: string;
-  sort_order?: number;
-  lessons?: Lesson[];
-}
-
-export interface Lesson {
-  id: string;
-  title: string;
-  content?: string;
-  module_id?: string;
-  type?: string;
-  duration?: string;
-  embed_url?: string;
-  sort_order?: number;
-  embedData?: {
-    url?: string;
-    type?: string;
-    title?: string;
-  };
-  quiz?: any; // Add quiz property to match usage in CourseModules.tsx
-}
-
-// Fetch all courses
-export const getCourses = async (): Promise<Course[]> => {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .order('created_at', { ascending: false });
-    
-  if (error) {
-    console.error('Error fetching courses:', error);
-    return [];
-  }
+// Mock function to get course count - in a real app this would connect to an API/database
+export const getCoursesCount = async (): Promise<number> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
   
-  return data || [];
+  // Return mock data
+  return 18;
 };
 
-// Fetch a specific course by ID with its modules and lessons
-export const getCourseById = async (courseId: string): Promise<Course | null> => {
-  const { data, error } = await supabase
-    .from('courses')
-    .select(`
-      *,
-      modules (
-        *,
-        lessons (*)
-      )
-    `)
-    .eq('id', courseId)
-    .single();
-    
-  if (error) {
-    console.error('Error fetching course:', error);
-    return null;
+export const getTotalCourseCount = async (): Promise<number> => {
+  try {
+    // In a real app, this would be an API call to fetch the actual count
+    return await getCoursesCount();
+  } catch (error) {
+    console.error("Error fetching course count:", error);
+    toast({
+      title: "Failed to load course data",
+      description: "Please try again later",
+      variant: "destructive",
+    });
+    return 0;
   }
-  
-  return data;
 };
 
-// Create a new course
-export const createCourse = async (course: Partial<Course> & { title: string }): Promise<Course | null> => {
-  if (!course.title) {
-    console.error("Course title is required");
-    return null;
-  }
-  
-  const { data, error } = await supabase
-    .from('courses')
-    .insert({
-      title: course.title,
-      description: course.description || "",
-      thumbnail_url: course.thumbnail_url,
-      duration: course.duration,
-      price: course.price,
-      is_featured: course.is_featured,
-      level: course.level,
-      category: course.category
-    })
-    .select()
-    .single();
+// Mock function to enroll in a course
+export const enrollInCourse = async (courseId: string): Promise<boolean> => {
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-  if (error) {
-    console.error('Error creating course:', error);
-    return null;
-  }
-  
-  return data;
-};
-
-// Alias for createCourse for compatibility
-export const saveCourse = createCourse;
-
-// Update an existing course
-export const updateCourse = async (courseId: string, updates: Partial<Course>): Promise<Course | null> => {
-  const { data, error } = await supabase
-    .from('courses')
-    .update(updates)
-    .eq('id', courseId)
-    .select()
-    .single();
+    toast({
+      title: "Enrolled successfully",
+      description: "You have been enrolled in the course",
+    });
     
-  if (error) {
-    console.error('Error updating course:', error);
-    return null;
-  }
-  
-  return data;
-};
-
-// Delete a course
-export const deleteCourse = async (courseId: string): Promise<boolean> => {
-  const { error } = await supabase
-    .from('courses')
-    .delete()
-    .eq('id', courseId);
-    
-  if (error) {
-    console.error('Error deleting course:', error);
+    return true;
+  } catch (error) {
+    console.error("Error enrolling in course:", error);
+    toast({
+      title: "Enrollment failed",
+      description: "There was an error enrolling you in this course",
+      variant: "destructive",
+    });
     return false;
   }
-  
-  return true;
 };
 
-// Get featured courses
-export const getFeaturedCourses = async (limit: number = 4): Promise<Course[]> => {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('is_featured', true)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-    
-  if (error) {
-    console.error('Error fetching featured courses:', error);
-    return [];
-  }
+export const getCourseProgress = async (courseId: string): Promise<number> => {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 300));
   
-  return data || [];
-};
-
-// Get courses by category
-export const getCoursesByCategory = async (category: string): Promise<Course[]> => {
-  const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .eq('category', category)
-    .order('created_at', { ascending: false });
-    
-  if (error) {
-    console.error('Error fetching courses by category:', error);
-    return [];
-  }
-  
-  return data || [];
-};
-
-// Count total courses
-export const getCoursesCount = async (): Promise<number> => {
-  const { count, error } = await supabase
-    .from('courses')
-    .select('*', { count: 'exact', head: true });
-    
-  if (error) {
-    console.error('Error counting courses:', error);
-    return 0;
-  }
-  
-  return count || 0;
-};
-
-// Add a module to a course
-export const addModuleToCourse = async (courseId: string, moduleData: Partial<Module> & { title: string }): Promise<Module | null> => {
-  const { data, error } = await supabase
-    .from('modules')
-    .insert({
-      course_id: courseId,
-      title: moduleData.title,
-      description: moduleData.description || "",
-      sort_order: moduleData.sort_order || 0
-    })
-    .select()
-    .single();
-    
-  if (error) {
-    console.error('Error adding module to course:', error);
-    return null;
-  }
-  
-  return data;
-};
-
-// Add a lesson to a module
-export const addLessonToModule = async (moduleId: string, lessonData: Partial<Lesson> & { title: string }): Promise<Lesson | null> => {
-  const { data, error } = await supabase
-    .from('lessons')
-    .insert({
-      module_id: moduleId,
-      title: lessonData.title,
-      content: lessonData.content || "",
-      type: lessonData.type || "text",
-      duration: lessonData.duration || "",
-      embed_url: lessonData.embedData?.url || null,
-      sort_order: lessonData.sort_order || 0
-    })
-    .select()
-    .single();
-    
-  if (error) {
-    console.error('Error adding lesson to module:', error);
-    return null;
-  }
-  
-  return data;
-};
-
-// Get total course count
-export const getTotalCourseCount = async (): Promise<number> => {
-  const { count, error } = await supabase
-    .from('courses')
-    .select('*', { count: 'exact', head: true });
-    
-  if (error) {
-    console.error('Error counting courses:', error);
-    return 0;
-  }
-  
-  return count || 0;
+  // Return random progress for demo purposes
+  return Math.floor(Math.random() * 100);
 };

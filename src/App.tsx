@@ -16,7 +16,7 @@ import MfaSetup from "./pages/MfaSetup";
 import ProfilePage from "./pages/ProfilePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PermissionGuard from "./components/PermissionGuard";
-import UserDashboard from "./components/layout/UserDashboard";
+import Dashboard from "./pages/Dashboard"; // New import
 import LearningHub from "./pages/LearningHub";
 import QuizPage from "./pages/QuizPage";
 import QuizTakePage from "./pages/QuizTakePage";
@@ -41,7 +41,7 @@ const App = () => (
           path="/dashboard" 
           element={
             <ProtectedRoute>
-              <UserDashboard />
+              <Dashboard />
             </ProtectedRoute>
           } 
         />

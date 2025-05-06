@@ -34,6 +34,15 @@
     --ring: 240 10% 3.9%;
  
     --radius: 0.5rem;
+    
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 10% 3.9%;
+    --sidebar-primary: 265 84% 70%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 240 5.9% 90%;
+    --sidebar-ring: 240 10% 3.9%;
   }
  
   .dark {
@@ -64,6 +73,15 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 265 84% 70%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 240 4.9% 83.9%;
   }
 }
  
@@ -94,27 +112,54 @@
     transform: translateY(-2px);
   }
   
-  /* Hover scale effect */
-  .hover-scale {
-    @apply transition-transform duration-200;
-  }
-  
-  .hover-scale:hover {
-    @apply transform scale-105;
-  }
-  
   /* Card hover effects */
   .card-hover {
     @apply transition-all duration-300 ease-in-out;
   }
   
   .card-hover:hover {
-    @apply shadow-lg transform -translate-y-1;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    @apply border-primary/30 shadow-lg;
   }
   
-  /* Enhanced focus styles for better accessibility */
-  .enhanced-focus:focus {
-    @apply outline-none ring-2 ring-primary ring-opacity-50;
+  /* Animation for dashboard elements */
+  .fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Staggered animation for list items */
+  .stagger-item {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+  
+  .stagger-item:nth-child(1) { animation-delay: 0.1s; }
+  .stagger-item:nth-child(2) { animation-delay: 0.2s; }
+  .stagger-item:nth-child(3) { animation-delay: 0.3s; }
+  .stagger-item:nth-child(4) { animation-delay: 0.4s; }
+  .stagger-item:nth-child(5) { animation-delay: 0.5s; }
+  .stagger-item:nth-child(6) { animation-delay: 0.6s; }
+  
+  /* Course card gradient backgrounds */
+  .bg-course-gradient-1 {
+    background: linear-gradient(135deg, #4CC9F0 0%, #4361EE 100%);
+  }
+  
+  .bg-course-gradient-2 {
+    background: linear-gradient(135deg, #7209B7 0%, #F72585 100%);
+  }
+  
+  .bg-course-gradient-3 {
+    background: linear-gradient(135deg, #3A0CA3 0%, #4361EE 100%);
   }
 }
