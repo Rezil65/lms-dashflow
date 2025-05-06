@@ -433,7 +433,7 @@ export const useQuiz = () => {
     createQuiz,
     getQuizById,
     getQuizzesByCourseId,
-    getQuizzesByCourse,
+    getQuizzesByCourse: getQuizzesByCourseId, // Alias
     submitQuizResult,
     getUserQuizResults,
     updateQuiz,
