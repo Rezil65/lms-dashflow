@@ -1,121 +1,161 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useProgress } from "@/hooks/use-progress";
+import { useAuth } from "@/context/AuthContext";
+import { getCoursesCount } from "@/utils/courseUtils";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
 
-import { BookOpen, Folders, Award, Code } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { getTotalCourseCount } from "@/utils/courseStorage";
+const mockData = [
+  { name: 'Jan', value: 400 },
+  { name: 'Feb', value: 300 },
+  { name: 'Mar', value: 200 },
+  { name: 'Apr', value: 278 },
+  { name: 'May', value: 189 },
+  { name: 'Jun', value: 239 },
+  { name: 'Jul', value: 349 },
+];
 
-interface StatCardProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color: string;
-  delay: number;
-  navigateTo?: string;
-}
+const pieData = [
+  { name: 'Completed', value: 400 },
+  { name: 'In Progress', value: 300 },
+  { name: 'Not Started', value: 200 },
+];
 
-const StatCard = ({ title, value, icon, color, delay, navigateTo }: StatCardProps) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      let start = 0;
-      const duration = 1500;
-      const increment = Math.ceil(value / (duration / 16));
-      
-      const timer = setInterval(() => {
-        start += increment;
-        if (start > value) {
-          setDisplayValue(value);
-          clearInterval(timer);
-        } else {
-          setDisplayValue(start);
-        }
-      }, 16);
-      
-      return () => clearInterval(timer);
-    }, delay);
-    
-    return () => clearTimeout(timeout);
-  }, [value, delay]);
-  
-  const handleClick = () => {
-    if (navigateTo) {
-      navigate(navigateTo);
-    }
-  };
-  
-  return (
-    <div 
-      className={`stat-card bg-white rounded-xl border border-border p-5 shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in ${navigateTo ? 'cursor-pointer hover:bg-gray-50' : ''}`}
-      style={{ animationDelay: `${delay}ms` }}
-      onClick={handleClick}
-    >
-      <div className="flex justify-between items-start">
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
-          {icon}
-        </div>
-      </div>
-      <p className="text-3xl font-display font-semibold mt-2">{displayValue}</p>
-    </div>
-  );
-};
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
 const Stats = () => {
-  const [courseCount, setCourseCount] = useState(0);
-  
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const { getUserProgress } = useProgress();
+  const [userProgress, setUserProgress] = useState<any[]>([]);
+  const [completedCourses, setCompletedCourses] = useState(0);
+  const [totalCourses, setTotalCourses] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Get the course count from localStorage
-    setCourseCount(getTotalCourseCount());
-    
-    // Listen for storage events to update the count if it changes
-    const handleStorageChange = () => {
-      setCourseCount(getTotalCourseCount());
+    const fetchStats = async () => {
+      setLoading(true);
+      
+      try {
+        // Get total courses count
+        const coursesCount = await getCoursesCount();
+        setTotalCourses(coursesCount);
+        
+        // Get user progress if logged in
+        if (user?.id) {
+          const progress = await getUserProgress(user.id);
+          setUserProgress(progress);
+          
+          // Count completed courses
+          const completed = progress.filter(course => course.completed).length;
+          setCompletedCourses(completed);
+        }
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        toast({
+          title: "Error fetching statistics",
+          description: "Please try again later",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
     };
     
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Custom event for when a course is added
-    window.addEventListener('courseAdded', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('courseAdded', handleStorageChange);
-    };
-  }, []);
+    fetchStats();
+  }, [user]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatCard
-        title="Courses"
-        value={courseCount}
-        icon={<Folders className="w-5 h-5 text-white" />}
-        color="bg-lms-blue"
-        delay={100}
-        navigateTo="/create-course"
-      />
-      <StatCard
-        title="Hours Learned"
-        value={156}
-        icon={<BookOpen className="w-5 h-5 text-white" />}
-        color="bg-lms-purple"
-        delay={200}
-      />
-      <StatCard
-        title="Certificates"
-        value={5}
-        icon={<Award className="w-5 h-5 text-white" />}
-        color="bg-lms-pink"
-        delay={300}
-      />
-      <StatCard
-        title="Projects"
-        value={12}
-        icon={<Code className="w-5 h-5 text-white" />}
-        color="bg-lms-teal"
-        delay={400}
-      />
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Statistics</h2>
+      
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="courses">Courses</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Course Progress</CardTitle>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </CardHeader>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Monthly Revenue</CardTitle>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={mockData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="courses">
+          <Card>
+            <CardHeader>
+              <CardTitle>Course Statistics</CardTitle>
+              <CardContent>
+                <p>Total Courses: {totalCourses}</p>
+              </CardContent>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Statistics</CardTitle>
+              <CardContent>
+                <p>Total Users: 500</p>
+                <p>Active Users: 300</p>
+              </CardContent>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

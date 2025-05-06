@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,7 @@ export interface Quiz {
   type: "single-choice" | "multiple-choice";
   options: QuizOption[];
   courseId?: string;
+  questions?: QuizQuestion[];
 }
 
 interface QuizManagerProps {
@@ -59,7 +61,7 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
   const [newQuizTitle, setNewQuizTitle] = useState("");
   const [newQuizDescription, setNewQuizDescription] = useState("");
   const [newQuizQuestions, setNewQuizQuestions] = useState<
-    { question: string; options: { text: string; isCorrect: boolean }[]; id?: string }[]
+    { question: string; options: { text: string; isCorrect: boolean }[]; id?: string; type?: "single-choice" | "multiple-choice" }[]
   >([]);
 
   useEffect(() => {
@@ -183,6 +185,7 @@ const QuizManager = ({ courseId, onSaveQuizzes }: QuizManagerProps) => {
         questions: newQuizQuestions.map(q => ({
           id: q.id || `temp-${Date.now()}`, // Use temp ID if no ID present
           question: q.question,
+          type: q.type,
           options: q.options.map((opt, idx) => ({
             id: `temp-opt-${idx}-${Date.now()}`, // Add temporary ID for options
             text: opt.text,

@@ -1,22 +1,45 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Award, BookOpen, Calendar, CheckCircle, Clock, FileText, Play, PlayCircle, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getCourses, Course } from "@/utils/courseStorage";
+import { getCourses, Course } from "@/utils/courseUtils";
+import { useProgress } from "@/hooks/use-progress";
+import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const MyLearningsTab = () => {
+  const { user } = useAuth();
+  const { getUserProgress } = useProgress();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [userProgress, setUserProgress] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load all courses
-    const allCourses = getCourses();
-    setCourses(allCourses);
-  }, []);
+    const loadCoursesAndProgress = async () => {
+      setLoading(true);
+      
+      try {
+        // Fetch courses
+        const loadedCourses = await getCourses();
+        setCourses(loadedCourses);
+        
+        // Fetch user progress if user is logged in
+        if (user?.id) {
+          const progress = await getUserProgress(user.id);
+          setUserProgress(progress);
+        }
+      } catch (error) {
+        console.error("Error loading courses or progress:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadCoursesAndProgress();
+  }, [user]);
 
   const inProgressCourses = courses.slice(0, 2); // Simulating in-progress courses
   const completedCourses = courses.slice(2, 3); // Simulating completed courses

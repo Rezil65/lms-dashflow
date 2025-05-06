@@ -14,6 +14,7 @@ export interface QuizQuestion {
   id: string;
   question: string;
   options: QuizOption[];
+  type?: 'single-choice' | 'multiple-choice';
 }
 
 export interface Quiz {
@@ -321,13 +322,14 @@ export function useQuiz() {
         
       if (error) throw error;
       
+      // Cast the selected_options to Record<string, string[]> since we know that's how we store them
       return (data || []).map(result => ({
         id: result.id,
         userId: result.user_id,
         quizId: result.quiz_id,
         score: result.score,
         completedAt: result.completed_at,
-        selectedOptions: result.selected_options || {}
+        selectedOptions: result.selected_options as Record<string, string[]> || {}
       }));
     } catch (err: any) {
       setError(err.message);

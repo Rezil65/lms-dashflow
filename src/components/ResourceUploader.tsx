@@ -109,14 +109,14 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
       setOpen(false);
       
       toast({
-        title: "Resource Added",
-        description: `${resourceName} has been added to course resources.`,
+        title: "Resource uploaded",
+        description: "Your resource has been uploaded successfully"
       });
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error('Error uploading resource:', error);
       toast({
-        title: "Upload Failed",
-        description: error.message || "There was an error uploading your resource.",
+        title: "Upload failed",
+        description: error.message,
         variant: "destructive"
       });
       setUploading(false);
@@ -125,32 +125,31 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
   
   const getFileTypeFromExtension = (filename: string): string => {
     const ext = filename.split('.').pop()?.toLowerCase() || '';
+    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
+    const documentExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
+    const videoExts = ['mp4', 'webm', 'mov', 'avi'];
+    const audioExts = ['mp3', 'wav', 'ogg', 'flac'];
     
-    if (['pdf'].includes(ext)) return 'application/pdf';
-    if (['doc', 'docx'].includes(ext)) return 'application/msword';
-    if (['xls', 'xlsx'].includes(ext)) return 'application/vnd.ms-excel';
-    if (['ppt', 'pptx'].includes(ext)) return 'application/vnd.ms-powerpoint';
-    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return `image/${ext}`;
-    if (['mp4', 'webm', 'ogg'].includes(ext)) return `video/${ext}`;
-    if (['html', 'htm'].includes(ext)) return 'text/html';
-    if (['csv'].includes(ext)) return 'text/csv';
+    if (imageExts.includes(ext)) return 'image';
+    if (documentExts.includes(ext)) return 'document';
+    if (videoExts.includes(ext)) return 'video';
+    if (audioExts.includes(ext)) return 'audio';
     
-    return 'application/octet-stream';
+    return 'other';
   };
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-1">
-          <Plus className="h-3 w-3" />
-          <span>Add Resource</span>
+        <Button variant="outline">
+          <Plus className="h-4 w-4 mr-2" /> Add Resource
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add Course Resource</DialogTitle>
+          <DialogTitle>Upload Resource</DialogTitle>
           <DialogDescription>
-            Upload documents, videos, or other resources for your course.
+            Upload a file to add as a course resource
           </DialogDescription>
         </DialogHeader>
         
@@ -165,16 +164,31 @@ const ResourceUploader = ({ courseId, onResourceAdded }: ResourceUploaderProps) 
             />
           </div>
           
-          <FileUploader onFileUploaded={handleFileUploaded} />
+          <div className="space-y-2">
+            <Label>Resource File</Label>
+            <FileUploader onFileUploaded={handleFileUploaded} />
+          </div>
+          
+          {currentFile && (
+            <div className="text-sm">
+              <p>Selected file: {currentFile.name}</p>
+              <p>Size: {Math.round(currentFile.size / 1024)} KB</p>
+            </div>
+          )}
         </div>
         
         <DialogFooter>
-          <Button
-            type="submit"
-            onClick={handleUploadComplete}
-            disabled={!currentFile || !resourceName.trim() || uploading}
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleUploadComplete} 
+            disabled={!currentFile || uploading} 
+            className="gap-2"
           >
-            {uploading ? "Uploading..." : "Add to Resources"}
+            {uploading ? 'Uploading...' : (
+              <>
+                <Upload className="h-4 w-4" /> Upload Resource
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

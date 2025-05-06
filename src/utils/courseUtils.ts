@@ -35,6 +35,13 @@ export interface Lesson {
   duration?: string;
   embed_url?: string;
   sort_order?: number;
+  // Add missing properties
+  embedData?: {
+    url?: string;
+    type?: string;
+    title?: string;
+  };
+  quiz?: any; // Add quiz property to match usage in CourseModules.tsx
 }
 
 // Fetch all courses
@@ -53,7 +60,7 @@ export const getCourses = async (): Promise<Course[]> => {
 };
 
 // Fetch a specific course by ID with its modules and lessons
-export const getCourseById = async (courseId: string | number): Promise<Course | null> => {
+export const getCourseById = async (courseId: string): Promise<Course | null> => {
   const { data, error } = await supabase
     .from('courses')
     .select(`
@@ -76,9 +83,23 @@ export const getCourseById = async (courseId: string | number): Promise<Course |
 
 // Create a new course
 export const createCourse = async (course: Partial<Course>): Promise<Course | null> => {
+  if (!course.title) {
+    console.error("Course title is required");
+    return null;
+  }
+  
   const { data, error } = await supabase
     .from('courses')
-    .insert(course)
+    .insert({
+      title: course.title,
+      description: course.description || "",
+      thumbnail_url: course.thumbnail_url,
+      duration: course.duration,
+      price: course.price,
+      is_featured: course.is_featured,
+      level: course.level,
+      category: course.category
+    })
     .select()
     .single();
     

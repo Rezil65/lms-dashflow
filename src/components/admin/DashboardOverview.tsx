@@ -1,8 +1,9 @@
 
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, Clock, DollarSign, Bell } from "lucide-react";
-import { getTotalCourseCount } from "@/utils/courseStorage";
+import { getCoursesCount } from "@/utils/courseUtils";
 
 // Sample data for the charts
 const userRegistrationData = [
@@ -13,12 +14,6 @@ const userRegistrationData = [
   { name: 'Fri', users: 38 },
   { name: 'Sat', users: 27 },
   { name: 'Sun', users: 9 },
-];
-
-const courseStatusData = [
-  { name: 'Published', count: getTotalCourseCount() || 5 },
-  { name: 'Draft', count: 3 },
-  { name: 'Archived', count: 2 },
 ];
 
 const StatCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode; color: string }) => (
@@ -38,6 +33,25 @@ const StatCard = ({ title, value, icon, color }: { title: string; value: string 
 );
 
 const DashboardOverview = () => {
+  const [courseCount, setCourseCount] = useState<number>(0);
+  const [courseStatusData, setCourseStatusData] = useState<{ name: string; count: number; }[]>([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      const count = await getCoursesCount();
+      setCourseCount(count);
+      
+      // Update course status data with real count
+      setCourseStatusData([
+        { name: 'Published', count: count },
+        { name: 'Draft', count: 3 },
+        { name: 'Archived', count: 2 },
+      ]);
+    };
+    
+    fetchData();
+  }, []);
+
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold">Dashboard Overview</h2>
@@ -51,7 +65,7 @@ const DashboardOverview = () => {
         />
         <StatCard 
           title="Active Courses" 
-          value={getTotalCourseCount() || 18} 
+          value={courseCount || 18} 
           icon={<BookOpen className="h-6 w-6 text-white" />} 
           color="bg-green-500" 
         />

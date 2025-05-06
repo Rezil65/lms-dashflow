@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import QuizTaker from "./Quiz/QuizTaker";
+import { QuizTaker } from "@/components/Quiz";
 import { getCourseById, Course, Module, Lesson } from "@/utils/courseUtils";
 
 interface CourseModulesProps {
@@ -104,28 +104,9 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
             content: "<p>JavaScript is the programming language that powers interactive websites.</p>",
             type: "text",
             duration: "30 minutes",
-            quiz: {
-              id: "quiz1",
-              title: "JavaScript Quiz",
-              description: "Test your knowledge of JavaScript basics",
-              type: "multiple-choice",
-              options: [
-                { id: "opt1", text: "JavaScript is a server-side language", isCorrect: false },
-                { id: "opt2", text: "JavaScript can manipulate HTML elements", isCorrect: true },
-                { id: "opt3", text: "JavaScript is statically typed", isCorrect: false },
-              ],
-              courseId: "1",
-              questions: [
-                {
-                  id: "q1",
-                  question: "What is JavaScript?",
-                  options: [
-                    { id: "opt1", text: "JavaScript is a server-side language", isCorrect: false },
-                    { id: "opt2", text: "JavaScript can manipulate HTML elements", isCorrect: true },
-                    { id: "opt3", text: "JavaScript is statically typed", isCorrect: false },
-                  ]
-                }
-              ]
+            embedData: {
+              url: "https://www.youtube.com/watch?v=Rh3tobg7hEo",
+              type: "video"
             }
           }
         ]
@@ -602,7 +583,7 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                             <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                           ) : (
                             <div className="h-4 w-4 border-2 rounded-full border-muted-foreground flex-shrink-0">
-                              {getLessonIcon(lesson.type)}
+                              {getLessonIcon(lesson.type || "")}
                             </div>
                           )}
                           <div>
@@ -616,7 +597,7 @@ const CourseModules = ({ isPreview = false, courseId = "1" }: CourseModulesProps
                           <div className="relative">
                             <div
                               className="prose prose-sm max-w-none bg-white p-4 rounded-md border"
-                              dangerouslySetInnerHTML={{ __html: lesson.content }}
+                              dangerouslySetInnerHTML={{ __html: lesson.content || "" }}
                             />
                             <div className="mt-4 flex justify-between">
                               <Button 
