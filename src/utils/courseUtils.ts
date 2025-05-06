@@ -1,5 +1,40 @@
 
 import { toast } from "@/hooks/use-toast";
+import { 
+  Course, 
+  Module, 
+  Lesson, 
+  getCourses, 
+  getCourseById, 
+  getTotalCourseCount as getStorageCourseCount,
+  addCourse as createCourse,
+  updateCourse,
+  deleteCourse,
+  addModuleToCourse,
+  updateCourseModule,
+  deleteCourseModule,
+  addLessonToModule,
+  updateLesson,
+  deleteLesson
+} from "@/utils/courseStorage";
+
+// Re-export the types and functions
+export { 
+  Course, 
+  Module, 
+  Lesson, 
+  getCourses, 
+  getCourseById, 
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  addModuleToCourse,
+  updateCourseModule,
+  deleteCourseModule,
+  addLessonToModule,
+  updateLesson,
+  deleteLesson
+};
 
 // Mock function to get course count - in a real app this would connect to an API/database
 export const getCoursesCount = async (): Promise<number> => {
@@ -12,8 +47,8 @@ export const getCoursesCount = async (): Promise<number> => {
 
 export const getTotalCourseCount = async (): Promise<number> => {
   try {
-    // In a real app, this would be an API call to fetch the actual count
-    return await getCoursesCount();
+    // Try to get the actual count from storage first
+    return await getStorageCourseCount();
   } catch (error) {
     console.error("Error fetching course count:", error);
     toast({
